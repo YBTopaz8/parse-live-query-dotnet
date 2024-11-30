@@ -10,6 +10,7 @@ using System.Text.Json;
 //using Parse.Common.Internal;
 //using Parse.Core.Internal;
 using static Parse.LiveQuery.LiveQueryException;
+using System.Diagnostics;
 
 namespace Parse.LiveQuery;
 
@@ -30,10 +31,9 @@ public class ParseLiveQueryClient {
     private int _requestIdCount = 1;
     private bool _userInitiatedDisconnect;
     private bool _hasReceivedConnected;
-
     public ParseLiveQueryClient() : this(GetDefaultUri()) { }
 
-    public ParseLiveQueryClient(Uri hostUri) : this(hostUri, WebSocketSharpClient.Factory) { }
+    public ParseLiveQueryClient(Uri hostUri) : this(hostUri, WebSocketClient.Factory) { } // Updated Factory
 
     public ParseLiveQueryClient(WebSocketClientFactory webSocketClientFactory) : this(GetDefaultUri(), webSocketClientFactory) { }
 
@@ -42,7 +42,8 @@ public class ParseLiveQueryClient {
     { }
 
     internal ParseLiveQueryClient(Uri hostUri, WebSocketClientFactory webSocketClientFactory,
-        ISubscriptionFactory subscriptionFactory, ITaskQueue taskQueue){
+        ISubscriptionFactory subscriptionFactory, ITaskQueue taskQueue)
+    {
         _hostUri = hostUri;
         _applicationId = ParseClient.Instance.ServerConnectionData.ApplicationID;
         _clientKey = ParseClient.Instance.ServerConnectionData.Key;
@@ -52,6 +53,7 @@ public class ParseLiveQueryClient {
         _subscriptionFactory = subscriptionFactory;
         _taskQueue = taskQueue;
     }
+
 
     private static Uri GetDefaultUri()
     {
@@ -66,6 +68,19 @@ public class ParseLiveQueryClient {
         }.Uri;
     }
 
+    /// <summary>
+    /// Subscribes to a specified Parse query to receive real-time updates 
+    /// for Create, Update, Delete, and other events on objects matching the query.
+    /// </summary>
+    /// <typeparam name="T">The type of ParseObject the query operates on.</typeparam>
+    /// <param name="query">The Parse query to subscribe to.</param>
+    /// <returns>
+    /// A <see cref="Subscription{T}"/> instance that allows handling events like Create, Update, and Delete 
+    /// on objects matching the query.
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if the client was explicitly disconnected and needs to be reconnected before subscribing.
+    /// </exception>
 
     public Subscription<T> Subscribe<T>(ParseQuery<T> query) where T : ParseObject
     {
@@ -216,17 +231,54 @@ public class ParseLiveQueryClient {
     {
         return _taskQueue.Enqueue(() => ParseMessage(message));
     }
+    private IDictionary<string, object> ConvertJsonElements(Dictionary<string, JsonElement> jsonElementDict)
+    {
+        var result = new Dictionary<string, object>();
 
+        foreach (var kvp in jsonElementDict)
+        {
+            JsonElement element = kvp.Value;
+
+            // Convert based on JsonElement type
+            object value = element.ValueKind switch
+            {
+                JsonValueKind.String => element.GetString(),
+                JsonValueKind.Number => element.TryGetInt64(out long l) ? l : element.GetDouble(), // Handle integers and floats
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                JsonValueKind.Null => null,
+                _ => element // Return as JsonElement if not a simple type
+            };
+
+            result[kvp.Key] = value;
+        }
+
+        return result;
+    }
 
     private void ParseMessage(string message)
     {
         try
         {
-            // Deserialize the message into a dictionary
-            IDictionary<string, object> jsonObject = JsonSerializer.Deserialize<Dictionary<string, object>>(message);
+            // Deserialize the message into a dictionary with JsonElement values
+            var jsonElementDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(message);
 
-            string rawOperation = (string)jsonObject["op"];
+            if (jsonElementDict == null || !jsonElementDict.ContainsKey("op"))
+            {
+                throw new InvalidResponseException("Message does not contain a valid 'op' field.");
+            }
 
+            // Convert JsonElement dictionary to object dictionary
+            var jsonObject = ConvertJsonElements(jsonElementDict);
+
+            // Extract the 'op' field
+            string rawOperation = jsonObject["op"] as string;
+            if (string.IsNullOrEmpty(rawOperation))
+            {
+                throw new InvalidResponseException("'op' field is null or empty.");
+            }
+
+            // Handle operations
             switch (rawOperation)
             {
                 case "connected":
@@ -238,8 +290,7 @@ public class ParseLiveQueryClient {
                     }
                     break;
                 case "redirect":
-                    // TODO: Handle redirect.
-                    //string url = (string) jsonObject["url"];
+                    // TODO: Handle redirect
                     break;
                 case "subscribed":
                     HandleSubscribedEvent(jsonObject);
@@ -266,7 +317,7 @@ public class ParseLiveQueryClient {
                     HandleErrorEvent(jsonObject);
                     break;
                 default:
-                    throw new InvalidResponseException(message);
+                    throw new InvalidResponseException($"Unexpected operation: {rawOperation}");
             }
         }
         catch (Exception e) when (!(e is LiveQueryException))
@@ -274,6 +325,7 @@ public class ParseLiveQueryClient {
             throw new InvalidResponseException(message, e);
         }
     }
+
 
     private void DispatchConnected()
     {
@@ -336,17 +388,71 @@ public class ParseLiveQueryClient {
 
     private void HandleObjectEvent(Subscription.Event subscriptionEvent, IDictionary<string, object> jsonObject)
     {
-        int requestId = Convert.ToInt32(jsonObject["requestId"]);
-        IDictionary<string, object> objectData = (IDictionary<string, object>)jsonObject["object"];
-
-        Subscription subscription;
-        if (_subscriptions.TryGetValue(requestId, out subscription))
+        try
         {
-            var objState = (IObjectState)ParseClient.Instance.Decoder.Decode(objectData, ParseClient.Instance.Services);
-            //IObjectState objState = ParseObjectCoder.Instance.Decode(objectData, ParseDecoder.Instance);
-            subscription.DidReceive(subscription.QueryObj, subscriptionEvent, objState);
+            int requestId = Convert.ToInt32(jsonObject["requestId"]);
+
+            // Extract and process the 'object' field
+            var objectElement = (JsonElement)jsonObject["object"];
+            IDictionary<string, object> objectData = JsonElementToDictionary(objectElement);
+
+            Subscription subscription;
+            if (_subscriptions.TryGetValue(requestId, out  subscription))
+{
+    var objState = (IObjectState)ParseClient.Instance.Decoder.Decode(objectData, ParseClient.Instance.Services);
+    subscription.DidReceive(subscription.QueryObj, subscriptionEvent, objState);
+}
+
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error in HandleObjectEvent: {ex.Message}");
         }
     }
+
+    private IDictionary<string, object> JsonElementToDictionary(JsonElement element)
+    {
+        if (element.ValueKind != JsonValueKind.Object)
+        {
+            throw new ArgumentException("Expected JsonElement to be an object.");
+        }
+
+        var result = new Dictionary<string, object>();
+        foreach (var property in element.EnumerateObject())
+        {
+            result[property.Name] = JsonElementToObject(property.Value);
+        }
+
+        return result;
+    }
+
+    private object JsonElementToObject(JsonElement element)
+    {
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                return JsonElementToDictionary(element);
+            case JsonValueKind.Array:
+                var list = new List<object>();
+                foreach (var arrayElement in element.EnumerateArray())
+                {
+                    list.Add(JsonElementToObject(arrayElement));
+                }
+                return list;
+            case JsonValueKind.String:
+                return element.GetString();
+            case JsonValueKind.Number:
+                return element.TryGetInt64(out long l) ? l : element.GetDouble();
+            case JsonValueKind.True:
+            case JsonValueKind.False:
+                return element.GetBoolean();
+            case JsonValueKind.Null:
+                return null;
+            default:
+                throw new ArgumentException($"Unsupported JsonValueKind: {element.ValueKind}");
+        }
+    }
+
 
     private void HandleErrorEvent(IDictionary<string, object> jsonObject)
     {
@@ -447,3 +553,4 @@ public class ParseLiveQueryClient {
     }
 
 }
+

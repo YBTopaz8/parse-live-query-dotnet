@@ -1,15 +1,15 @@
 ﻿using System;
 
-namespace Parse.LiveQuery {
-    public interface IParseLiveQueryClientCallbacks {
+namespace Parse.LiveQuery; 
 
-        void OnLiveQueryClientConnected(ParseLiveQueryClient client);
+public interface IParseLiveQueryClientCallbacks {
 
-        void OnLiveQueryClientDisconnected(ParseLiveQueryClient client, bool userInitiated);
+    void OnLiveQueryClientConnected(ParseLiveQueryClient client);
 
-        void OnLiveQueryError(ParseLiveQueryClient client, LiveQueryException reason);
+    void OnLiveQueryClientDisconnected(ParseLiveQueryClient client, bool userInitiated);
 
-        void OnSocketError(ParseLiveQueryClient client, Exception reason);
+    void OnLiveQueryError(ParseLiveQueryClient client, LiveQueryException reason);
 
-    }
+    void OnSocketError(ParseLiveQueryClient client, Exception reason);
+
 }

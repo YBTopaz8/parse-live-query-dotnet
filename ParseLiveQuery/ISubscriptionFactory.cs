@@ -1,7 +1,8 @@
-﻿namespace Parse.LiveQuery {
-    internal interface ISubscriptionFactory {
+﻿namespace Parse.LiveQuery; 
 
-        Subscription<T> CreateSubscription<T>(int requestId, ParseQuery<T> query) where T : ParseObject;
+internal interface ISubscriptionFactory
+{
 
-    }
+    Subscription<T> CreateSubscription<T>(int requestId, ParseQuery<T> query) where T : ParseObject;
+
 }

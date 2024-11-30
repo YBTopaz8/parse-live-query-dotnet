@@ -1,9 +1,9 @@
-﻿namespace Parse.LiveQuery {
-    public enum WebSocketClientState {
-        None,
-        Connecting,
-        Connected,
-        Disconnecting,
-        Disconnected
-    }
+﻿namespace Parse.LiveQuery; 
+
+public enum WebSocketClientState {
+    None,
+    Connecting,
+    Connected,
+    Disconnecting,
+    Disconnected
 }

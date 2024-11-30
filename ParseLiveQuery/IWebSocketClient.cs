@@ -1,13 +1,15 @@
-﻿namespace Parse.LiveQuery {
-    public interface IWebSocketClient {
+﻿using System.Threading.Tasks;
 
-        void Open();
+namespace Parse.LiveQuery; 
 
-        void Close();
+public interface IWebSocketClient {
 
-        void Send(string message);
+    Task Open();
 
-        WebSocketClientState State { get; }
+    Task Close();
 
-    }
+    Task Send(string message);
+
+    WebSocketClientState State { get; }
+
 }

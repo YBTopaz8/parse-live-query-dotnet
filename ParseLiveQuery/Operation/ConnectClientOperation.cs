@@ -1,23 +1,23 @@
 ﻿using System.Collections.Generic;
 
 
-namespace Parse.LiveQuery {
-    public class ConnectClientOperation : SessionClientOperation {
+namespace Parse.LiveQuery; 
 
-        private readonly string _applicationId;
-        private readonly string _clientKey;
-        internal ConnectClientOperation(string applicationId, string clientKey, string sessionToken) : base(sessionToken)
-        {
-            _applicationId = applicationId;
-            _clientKey = clientKey;
-        }
+public class ConnectClientOperation : SessionClientOperation {
 
-
-        protected override IDictionary<string, object> ToJsonObject() => new Dictionary<string, object> {
-            ["op"] = "connect",
-            ["applicationId"] = _applicationId,
-            ["clientKey"] = _clientKey
-        };
-
+    private readonly string _applicationId;
+    private readonly string _clientKey;
+    internal ConnectClientOperation(string applicationId, string clientKey, string sessionToken) : base(sessionToken)
+    {
+        _applicationId = applicationId;
+        _clientKey = clientKey;
     }
+
+
+    protected override IDictionary<string, object> ToJsonObject() => new Dictionary<string, object> {
+        ["op"] = "connect",
+        ["applicationId"] = _applicationId,
+        ["clientKey"] = _clientKey
+    };
+
 }

@@ -1,17 +1,17 @@
 ﻿using System;
 
-namespace Parse.LiveQuery {
-    public interface IWebSocketClientCallback {
+namespace Parse.LiveQuery; 
 
-        void OnOpen();
+public interface IWebSocketClientCallback {
 
-        void OnMessage(string message);
+    void OnOpen();
 
-        void OnClose();
+    void OnMessage(string message);
 
-        void OnError(Exception exception);
+    void OnClose();
 
-        void OnStateChanged();
+    void OnError(Exception exception);
 
-    }
+    void OnStateChanged();
+
 }

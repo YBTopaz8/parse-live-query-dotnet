@@ -1,7 +1,6 @@
-﻿namespace Parse.LiveQuery {
-    public interface IClientOperation {
+﻿namespace Parse.LiveQuery; 
+public interface IClientOperation {
 
-        string ToJson();
+    string ToJson();
 
-    }
 }

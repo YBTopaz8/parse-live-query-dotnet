@@ -1,94 +1,151 @@
 ﻿using System;
-using WebSocketSharp;
+using System.Net.WebSockets;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace Parse.LiveQuery {
-    public class WebSocketSharpClient : IWebSocketClient {
+namespace Parse.LiveQuery;
 
-        public static readonly WebSocketClientFactory Factory = (hostUri, callback) => new WebSocketSharpClient(hostUri, callback);
+public class WebSocketClient : IWebSocketClient
+{
+    public static readonly WebSocketClientFactory Factory = (hostUri, callback) => new WebSocketClient(hostUri, callback);
 
-        public IWebSocketClient CreateInstance(Uri hostUri, IWebSocketClientCallback webSocketClientCallback) {
-            return new WebSocketSharpClient(hostUri, webSocketClientCallback);
-        }
+    private readonly object _mutex = new object();
+    private readonly Uri _hostUri;
+    private readonly IWebSocketClientCallback _webSocketClientCallback;
 
-        private readonly Logger _log = new Logger();
-        private readonly object _mutex = new object();
+    private volatile WebSocketClientState _state = WebSocketClientState.None;
+    private ClientWebSocket _webSocket;
+    private CancellationTokenSource _cancellationTokenSource;
 
-        private readonly Uri _hostUri;
-        private readonly IWebSocketClientCallback _webSocketClientCallback;
-
-        private volatile WebSocketClientState _state = WebSocketClientState.None;
-        private WebSocket _websocket;
-
-        public WebSocketSharpClient(Uri hostUri, IWebSocketClientCallback webSocketClientCallback) {
-            _hostUri = hostUri;
-            _webSocketClientCallback = webSocketClientCallback;
-        }
-
-        public WebSocketClientState State => _state;
-
-
-        public void Open() {
-            SynchronizeWhen(WebSocketClientState.None, () => {
-                _websocket = new WebSocket(_hostUri.ToString());
-                _websocket.OnOpen += OnOpen;
-                _websocket.OnClose += OnClose;
-                _websocket.OnMessage += OnMessage;
-                _websocket.OnError += OnError;
-                _state = WebSocketClientState.Connecting;
-                _websocket.ConnectAsync();
-            });
-        }
-
-        public void Close() {
-            SynchronizeWhenNot(WebSocketClientState.None, () => {
-                _state = WebSocketClientState.Disconnecting;
-                _websocket.Close(CloseStatusCode.Normal, "User invoked close");
-            });
-        }
-
-        public void Send(string message) {
-            SynchronizeWhen(WebSocketClientState.Connected, () => _websocket.Send(message));
-        }
-
-        // Event Handlers
-
-        private void OnOpen(object sender, EventArgs e) {
-            Synchronize(() => _state = WebSocketClientState.Connected);
-            _webSocketClientCallback.OnOpen();
-        }
-
-        private void OnClose(object sender, CloseEventArgs e) {
-            Synchronize(() => _state = WebSocketClientState.Disconnected);
-            _webSocketClientCallback.OnClose();
-        }
-
-        private void OnMessage(object sender, MessageEventArgs e) {
-            if (e.IsText) _webSocketClientCallback.OnMessage(e.Data);
-            else if (e.IsBinary) {
-                string hexData = BitConverter.ToString(e.RawData.SubArray(0, Math.Min(e.RawData.Length, 50))).Replace("-", "");
-                _log.Warn($"Ignoring unexpected binary message > [{hexData}{(e.RawData.Length > 50 ? " ..." : "")}]");
-            }
-        }
-
-        private void OnError(object sender, ErrorEventArgs e) {
-            _webSocketClientCallback.OnError(e.Exception);
-        }
-
-
-        private void Synchronize(Action action, Func<bool> predicate = null) {
-            bool stateChanged;
-            lock (_mutex) {
-                WebSocketClientState state = _state;
-                if (predicate == null || predicate()) action();
-                stateChanged = _state != state;
-            }
-            // notify outside lock to avoid deadlock
-            if (stateChanged) _webSocketClientCallback.OnStateChanged();
-        }
-
-        private void SynchronizeWhen(WebSocketClientState state, Action action) => Synchronize(action, () => _state == state);
-
-        private void SynchronizeWhenNot(WebSocketClientState state, Action action) => Synchronize(action, () => _state != state);
-
+    public WebSocketClient(Uri hostUri, IWebSocketClientCallback webSocketClientCallback)
+    {
+        _hostUri = hostUri;
+        _webSocketClientCallback = webSocketClientCallback;
     }
+
+    public WebSocketClientState State => _state;
+
+    public async Task Open()
+    {
+        await SynchronizeWhen(WebSocketClientState.None, async () =>
+        {
+            _cancellationTokenSource = new CancellationTokenSource();
+            _webSocket = new ClientWebSocket();
+            _state = WebSocketClientState.Connecting;
+
+            try
+            {
+                await _webSocket.ConnectAsync(_hostUri, _cancellationTokenSource.Token);
+                _state = WebSocketClientState.Connected;
+                _webSocketClientCallback.OnOpen();
+
+                _ = StartReceivingAsync(); // Start receiving messages
+            }
+            catch (Exception ex)
+            {
+                _state = WebSocketClientState.Disconnected;
+                _webSocketClientCallback.OnError(ex);
+            }
+        });
+    }
+
+    public async Task Close()
+    {
+       await SynchronizeWhenNot(WebSocketClientState.None, async () =>
+        {
+            _state = WebSocketClientState.Disconnecting;
+
+            try
+            {
+                _cancellationTokenSource?.Cancel();
+                await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "User invoked close", CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _webSocketClientCallback.OnError(ex);
+            }
+            finally
+            {
+                _state = WebSocketClientState.Disconnected;
+                _webSocketClientCallback.OnClose();
+            }
+        });
+    }
+
+    public async Task Send(string message)
+    {
+        await SynchronizeWhen(WebSocketClientState.Connected, async () =>
+        {
+            try
+            {
+                var buffer = Encoding.UTF8.GetBytes(message);
+                var segment = new ArraySegment<byte>(buffer);
+                await _webSocket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _webSocketClientCallback.OnError(ex);
+            }
+        });
+    }
+
+    private async Task StartReceivingAsync()
+    {
+        var buffer = new ArraySegment<byte>(new byte[8192]);
+
+        try
+        {
+            while (_state == WebSocketClientState.Connected && !_cancellationTokenSource.Token.IsCancellationRequested)
+            {
+                WebSocketReceiveResult result = await _webSocket.ReceiveAsync(buffer, _cancellationTokenSource.Token);
+
+                if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    _state = WebSocketClientState.Disconnected;
+                    _webSocketClientCallback.OnClose();
+                    break;
+                }
+
+                var message = Encoding.UTF8.GetString(buffer.Array, 0, result.Count);
+                _webSocketClientCallback.OnMessage(message);
+            }
+        }
+        catch (Exception ex)
+        {
+            _webSocketClientCallback.OnError(ex);
+            _state = WebSocketClientState.Disconnected;
+        }
+    }
+
+    // Synchronization Helpers
+
+    private async Task SynchronizeAsync(Func<Task> action, Func<bool> predicate = null)
+    {
+        bool stateChanged;
+        lock (_mutex)
+        {
+            var previousState = _state;
+            if (predicate == null || predicate())
+            {
+                stateChanged = true;
+            }
+            else
+            {
+                return; // Exit early if the state doesn't match
+            }
+        }
+
+        if (stateChanged)
+        {
+            await action();
+            _webSocketClientCallback.OnStateChanged();
+        }
+    }
+
+    private async Task SynchronizeWhen(WebSocketClientState state, Func<Task> action) =>
+         await SynchronizeAsync(action, () => _state == state);
+
+    private async Task SynchronizeWhenNot(WebSocketClientState state, Func<Task> action) =>
+        await SynchronizeAsync(action, () => _state != state);
 }

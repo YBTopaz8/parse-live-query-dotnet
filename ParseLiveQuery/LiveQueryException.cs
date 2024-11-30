@@ -1,6 +1,7 @@
 ﻿using System;
 
-namespace Parse.LiveQuery {
+namespace Parse.LiveQuery;
+
     public abstract class LiveQueryException : Exception {
 
         private LiveQueryException() { }
@@ -70,4 +71,3 @@ namespace Parse.LiveQuery {
         }
 
     }
-}
