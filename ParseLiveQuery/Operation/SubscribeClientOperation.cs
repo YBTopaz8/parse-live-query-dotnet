@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
-using Parse.Common.Internal;
-using Parse.Core.Internal;
+//using Parse.Common.Internal;
+//using Parse.Core.Internal;
+using Parse.Infrastructure.Data;
 
 namespace Parse.LiveQuery {
     public class SubscribeClientOperation<T> : SessionClientOperation where T : ParseObject {
@@ -20,9 +21,11 @@ namespace Parse.LiveQuery {
         protected override IDictionary<string, object> ToJsonObject() => new Dictionary<string, object> {
             ["op"] = "subscribe",
             ["requestId"] = _requestId,
-            ["query"] = new Dictionary<string, object> {
-                ["className"] = _query.GetClassName(),
-                ["where"] = _query.BuildParameters().GetOrDefault("where", EmptyJsonObject)
+            ["query"] = new Dictionary<string, object>
+            {
+                ["className"] = ParseClient.Instance.CreateObjectWithoutData<T>(null).ClassName,
+                //["className"] = _query.w.GetClassName(),
+                ["where"] = PointerOrLocalIdEncoder.Instance.Encode(EmptyJsonObject, ParseClient.Instance.Services)
             }
         };
 

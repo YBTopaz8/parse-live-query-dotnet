@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Parse.Common.Internal;
+
+using System.Text.Json;
+
 
 namespace Parse.LiveQuery {
     /// <summary>
@@ -20,10 +22,14 @@ namespace Parse.LiveQuery {
             _sessionToken = sessionToken;
         }
 
-        public string ToJson() {
+        public string ToJson()
+        {
             IDictionary<string, object> jsonObject = ToJsonObject();
-            if (_sessionToken != null) jsonObject.Add("sessionToken", _sessionToken);
-            return Json.Encode(jsonObject);
+            if (_sessionToken != null)
+            {
+                jsonObject.Add("sessionToken", _sessionToken);
+            }
+            return JsonSerializer.Serialize(jsonObject);
         }
 
         protected abstract IDictionary<string, object> ToJsonObject();

@@ -1,14 +1,14 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <AssemblyName>ParseLiveQuery</AssemblyName>
     <RootNamespace>Parse.LiveQuery</RootNamespace>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="Parse" Version="2.0.0" />
-    <PackageReference Include="WebSocketSharp" Version="1.0.3-rc11" />
+    <PackageReference Include="System.Text.Json" Version="9.0.0" />
+    <PackageReference Include="websocketsharp.core" Version="1.0.1" />
   </ItemGroup>
-
+  <ItemGroup>
+    <ProjectReference Include="..\..\Parse-SDK-dotNETMAUI\Parse\Parse.csproj" />
+  </ItemGroup>
 </Project>
