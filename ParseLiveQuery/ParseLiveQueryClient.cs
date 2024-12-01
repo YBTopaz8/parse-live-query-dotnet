@@ -119,7 +119,9 @@ public class ParseLiveQueryClient {
     public void Unsubscribe<T>(ParseQuery<T> query) where T : ParseObject
     {
         if (query == null)
+        {
             return;
+        }            
         var requestIds = new List<int>();
         foreach (int requestId in _subscriptions.Keys)
         {
