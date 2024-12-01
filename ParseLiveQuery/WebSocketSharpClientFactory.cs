@@ -52,7 +52,7 @@ public class WebSocketClient : IWebSocketClient
 
     public async Task Close()
     {
-       await SynchronizeWhenNot(WebSocketClientState.None, async () =>
+        await SynchronizeWhenNot(WebSocketClientState.None, async () =>
         {
             _state = WebSocketClientState.Disconnecting;
 
