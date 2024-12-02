@@ -11,7 +11,8 @@ Here is a full YouTube video walking through what it is, and how to use it.
 
 Here is the full ReadMe;
 
-Since I Updated this based on my MAUI Projects, I had to update my fork of Parse SDK to have MAUI support, thus THIS is DEPENDENT on my [ParseSDK fork](https://github.com/YBTopaz8/Parse-SDK-dotNET). 
+Since I Updated this based on my MAUI Projects, I had to update my fork of Parse SDK to have MAUI support, thus 
+## THIS is DEPENDENT on my [ParseSDK fork](https://github.com/YBTopaz8/Parse-SDK-dotNET). 
 
 Will release a Nuget version later for both.
 
