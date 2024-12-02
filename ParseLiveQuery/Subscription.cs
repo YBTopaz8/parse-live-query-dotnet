@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using Parse.Abstractions.Platform.Objects;
 //using Parse.Core.Internal;
@@ -8,15 +9,16 @@ namespace Parse.LiveQuery;
 public class Subscription<T> : Subscription where T : ParseObject
 {
 
-    private readonly List<EventsCallback<T>> _eventsCallbacks = new List<EventsCallback<T>>();
-    private readonly List<ErrorCallback<T>> _errorCallbacks = new List<ErrorCallback<T>>();
-    private readonly List<SubscribeCallback<T>> _subscribeCallbacks = new List<SubscribeCallback<T>>();
-    private readonly List<UnsubscribeCallback<T>> _unsubscribeCallbacks = new List<UnsubscribeCallback<T>>();
+    private readonly ConcurrentBag<EventsCallback<T>> _eventsCallbacks = new ();
+    private readonly ConcurrentBag<ErrorCallback<T>> _errorCallbacks = new ();
+    private readonly ConcurrentBag<SubscribeCallback<T>> _subscribeCallbacks = new ();
+    private readonly ConcurrentBag<UnsubscribeCallback<T>> _unsubscribeCallbacks = new ();
 
     internal Subscription(int requestId, ParseQuery<T> query)
     {
         RequestId = requestId;
         Query = query;
+        
     }
 
     public int RequestId { get; }
@@ -24,12 +26,15 @@ public class Subscription<T> : Subscription where T : ParseObject
     internal ParseQuery<T> Query { get; }
 
     internal override object QueryObj => Query;
+    
 
     /// <summary>
     /// Register a callback for when any event occurs.
     /// </summary>
     /// <param name="callback">The events callback to register.</param>
     /// <returns>The same Subscription, for easy chaining.</returns>
+    /// private readonly ConcurrentBag<EventsCallback<T>> _eventsCallbacks = new ConcurrentBag<EventsCallback<T>>();
+
     public Subscription<T> HandleEvents(EventsCallback<T> callback)
     {
         _eventsCallbacks.Add(callback);
@@ -69,6 +74,7 @@ public class Subscription<T> : Subscription where T : ParseObject
     /// <returns>The same Subscription, for easy chaining.</returns>
     public Subscription<T> HandleSubscribe(SubscribeCallback<T> callback)
     {
+
         _subscribeCallbacks.Add(callback);
         return this;
     }
@@ -88,14 +94,15 @@ public class Subscription<T> : Subscription where T : ParseObject
     internal override void DidReceive(object queryObj, Event objEvent, IObjectState objState)
     {
         ParseQuery<T> query = (ParseQuery<T>)queryObj;
-
+        
         T obj = ParseClient.Instance.CreateObjectWithoutData<T>(objState.ClassName ?? typeof(T).Name);
         obj.HandleFetchResult(objState);
 
         // Trigger the event callbacks with the decoded object
         foreach (EventsCallback<T> eventsCallback in _eventsCallbacks)
         {
-            eventsCallback(query, objEvent, obj);
+            
+            eventsCallback?.Invoke(query, objEvent, obj);
         }
     }
 
@@ -104,7 +111,7 @@ public class Subscription<T> : Subscription where T : ParseObject
     {
         foreach (ErrorCallback<T> errorCallback in _errorCallbacks)
         {
-            errorCallback((ParseQuery<T>)queryObj, error);
+            errorCallback?.Invoke((ParseQuery<T>)queryObj, error);
         }
     }
 
@@ -112,7 +119,7 @@ public class Subscription<T> : Subscription where T : ParseObject
     {
         foreach (SubscribeCallback<T> subscribeCallback in _subscribeCallbacks)
         {
-            subscribeCallback((ParseQuery<T>)queryObj);
+            subscribeCallback?.Invoke((ParseQuery<T>)queryObj);
         }
     }
 
@@ -120,7 +127,7 @@ public class Subscription<T> : Subscription where T : ParseObject
     {
         foreach (UnsubscribeCallback<T> unsubscribeCallback in _unsubscribeCallbacks)
         {
-            unsubscribeCallback((ParseQuery<T>)queryObj);
+            unsubscribeCallback?.Invoke((ParseQuery<T>)queryObj);
         }
     }
 

@@ -82,6 +82,7 @@ public class WebSocketClient : IWebSocketClient
                 var buffer = Encoding.UTF8.GetBytes(message);
                 var segment = new ArraySegment<byte>(buffer);
                 await _webSocket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None);
+                
             }
             catch (Exception ex)
             {
@@ -122,30 +123,34 @@ public class WebSocketClient : IWebSocketClient
 
     private async Task SynchronizeAsync(Func<Task> action, Func<bool> predicate = null)
     {
-        bool stateChanged;
+        predicate ??= () => true; // Default predicate ensures it's never null
+
+        bool stateChanged = false;
         lock (_mutex)
         {
             var previousState = _state;
-            if (predicate == null || predicate())
+            if (predicate())
             {
-                stateChanged = true;
-            }
-            else
-            {
-                return; // Exit early if the state doesn't match
+                stateChanged = true; // State is allowed to change
             }
         }
 
+        // Perform actions outside of the lock to avoid deadlocks
         if (stateChanged)
         {
-            await action();
+            await action().ConfigureAwait(false); // Ensure proper task continuation without capturing context
             _webSocketClientCallback.OnStateChanged();
         }
     }
 
-    private async Task SynchronizeWhen(WebSocketClientState state, Func<Task> action) =>
-         await SynchronizeAsync(action, () => _state == state);
 
-    private async Task SynchronizeWhenNot(WebSocketClientState state, Func<Task> action) =>
+    private async Task SynchronizeWhen(WebSocketClientState state, Func<Task> action)
+    {
+        await SynchronizeAsync(action, () => _state == state);
+    }
+
+    private async Task SynchronizeWhenNot(WebSocketClientState state, Func<Task> action)
+    {
         await SynchronizeAsync(action, () => _state != state);
+    }
 }

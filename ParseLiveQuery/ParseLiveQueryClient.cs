@@ -89,7 +89,7 @@ public class ParseLiveQueryClient
         Subscription<T> subscription = _subscriptionFactory.CreateSubscription(requestId, query);
 
         _subscriptions.TryAdd(requestId, subscription);
-
+        
         if (IsConnected())
         {
             SendSubscription(subscription);
@@ -110,8 +110,22 @@ public class ParseLiveQueryClient
         switch (GetWebSocketState())
         {
             case WebSocketClientState.None:
+                Debug.WriteLine("None...");
+                Reconnect();
+                break;
+            case WebSocketClientState.Connecting:
+                Debug.WriteLine("Connecting");
+                break;
             case WebSocketClientState.Disconnecting:
+                Debug.WriteLine("Disconnecting");
+                Reconnect();
+                break;
+            case WebSocketClientState.Connected:
+                Debug.WriteLine("Connected");
+                //Reconnect();
+                break;
             case WebSocketClientState.Disconnected:
+                Debug.WriteLine("Disconnected");
                 Reconnect();
                 break;
         }
@@ -123,14 +137,21 @@ public class ParseLiveQueryClient
         {
             return;
         }
-        foreach (Subscription sub in _subscriptions.Values)
+        var requestIds = new List<int>();
+        foreach (int rId in _subscriptions.Keys)
         {
-            //var subb = _subscriptions[0];
-            if (query.Equals(sub.QueryObj) )
+            var sub = _subscriptions[rId];
+            if (query.Equals(sub.QueryObj))
             {
                 SendUnsubscription((Subscription<T>) sub);
-                //requestIds.Add(subb);
+                requestIds.Add(rId);
             }
+        }
+
+        Subscription dummy = null;
+        foreach (int requestId in requestIds)
+        {
+            _subscriptions.TryRemove(requestId, out dummy);
         }
     }
 
@@ -138,21 +159,21 @@ public class ParseLiveQueryClient
     {
         if (query == null || subscription == null)
             return;
-        //var requestIds = new List<Subscription>();
-        foreach (Subscription sub in _subscriptions.Values)
+        var requestIds = new List<int>();
+        foreach (int requestId in _subscriptions.Keys)
         {
-            //var subb = _subscriptions[0];
+            var sub = _subscriptions[requestId];
             if (query.Equals(sub.QueryObj) && subscription.Equals(sub))
             {
                 SendUnsubscription(subscription);
-                //requestIds.Add(subb);
+                requestIds.Add(requestId);
             }
         }
-        //Subscription dummy = null;
-        //foreach (int requestId in requestIds)
-        //{
-        //    _subscriptions.TryRemove(requestId, out dummy);
-        //}
+        Subscription dummy = null;
+        foreach (int requestId in requestIds)
+        {
+            _subscriptions.TryRemove(requestId, out dummy);
+        }
     }
 
     public void Reconnect()
@@ -479,25 +500,42 @@ public class ParseLiveQueryClient
         {
             _client = client;
         }
-
-        public void OnOpen()
+        public async void OnOpen()
         {
-            _client._hasReceivedConnected = false;
-            _client._taskQueue.EnqueueOnError(
-                _client.SendOperationWithSessionAsync(session => new ConnectClientOperation(_client._applicationId, _client._clientKey, session)),
-                error => _client.DispatchError(error.InnerException as LiveQueryException ??
-                    new UnknownException("Error connecting client", error))
-            );
+            try
+            {
+                _client._hasReceivedConnected = false;
+
+                // Send the operation asynchronously and handle errors
+                await _client.SendOperationWithSessionAsync(session =>
+                    new ConnectClientOperation(_client._applicationId, _client._clientKey, session))
+                    .ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                // Use a flattened exception for better debugging
+                var exception = ex is AggregateException ae ? ae.Flatten() : ex;
+                _client.DispatchError(exception.InnerException as LiveQueryException ??
+                                      new UnknownException("Error connecting client", exception));
+            }
         }
 
-        public void OnMessage(string message)
+        public async void OnMessage(string message)
         {
-            _client._taskQueue.EnqueueOnError(
-                _client.HandleOperationAsync(message),
-                error => _client.DispatchError(error.InnerException as LiveQueryException ??
-                    new UnknownException("Error handling message " + message, error))
-            );
+            try
+            {
+                // Process the message asynchronously and handle errors
+                await _client.HandleOperationAsync(message).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                // Use a flattened exception for better debugging
+                var exception = ex is AggregateException ae ? ae.Flatten() : ex;
+                _client.DispatchError(exception.InnerException as LiveQueryException ??
+                                      new UnknownException($"Error handling message: {message}", exception));
+            }
         }
+
 
         public void OnClose()
         {
@@ -530,27 +568,42 @@ public class ParseLiveQueryClient
 
     private class TaskQueueWrapper : ITaskQueue
     {
+        private readonly TaskQueue _underlying = new(); // Simplified initialization
 
-        private readonly TaskQueue _underlying = new TaskQueue();
-
-        public Task Enqueue(Action taskStart)
+        public async Task Enqueue(Action taskStart)
         {
-            return _underlying.Enqueue(task => task.ContinueWith(t => taskStart()), CancellationToken.None);
-        }
-
-        public Task EnqueueOnSuccess<TIn>(Task<TIn> task, Func<Task<TIn>, Task> onSuccess)
-        {
-            return task.OnSuccess(onSuccess).Unwrap();
-        }
-
-        public Task EnqueueOnError(Task task, Action<Exception> onError)
-        {
-            return task.ContinueWith(t =>
+            await _underlying.Enqueue(async _ =>
             {
-                if (t.Exception != null)
-                    onError(t.Exception);
-            }, TaskContinuationOptions.ExecuteSynchronously); // Error handling doesn't need to be async
+                taskStart();
+                await Task.CompletedTask; // Ensures compatibility with async API
+            }, CancellationToken.None);
         }
 
+        public async Task EnqueueOnSuccess<TIn>(Task<TIn> task, Func<Task<TIn>, Task> onSuccess)
+        {
+            try
+            {
+                await task.ConfigureAwait(false); // Await the original task
+                await onSuccess(task).ConfigureAwait(false); // Pass to the success continuation
+            }
+            catch (Exception ex)
+            {
+                // Ensure exceptions propagate if necessary
+                throw new InvalidOperationException("Error in EnqueueOnSuccess", ex);
+            }
+        }
+
+        public async Task EnqueueOnError(Task task, Action<Exception> onError)
+        {
+            try
+            {
+                await task.ConfigureAwait(false); // Await the original task
+            }
+            catch (Exception ex)
+            {
+                onError(ex); // Call error handler
+            }
+        }
     }
+
 }

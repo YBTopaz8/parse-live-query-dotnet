@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Parse.Infrastructure.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -35,9 +36,8 @@ public abstract class SessionClientOperation : IClientOperation {
                 jsonObject.Add("sessionToken", _sessionToken);
             }
         }
-
-        // Serialize the dictionary to a JSON string
-        return JsonSerializer.Serialize(jsonObject);
+        return JsonUtilities.Encode(jsonObject);
+        
     }
 
 
