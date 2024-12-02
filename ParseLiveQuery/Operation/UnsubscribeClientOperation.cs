@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Parse.Infrastructure.Utilities;
+using System.Collections.Generic;
 using System.Text.Json;
 
 namespace Parse.LiveQuery; 
@@ -10,7 +11,7 @@ public class UnsubscribeClientOperation : IClientOperation {
         _requestId = requestId;
     }
 
-    public string ToJson() => JsonSerializer.Serialize(new Dictionary<string, object>
+    public string ToJson() => JsonUtilities.Encode(new Dictionary<string, object>
     {
         ["op"] = "unsubscribe",
         ["requestId"] = _requestId

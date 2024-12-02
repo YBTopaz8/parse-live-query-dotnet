@@ -11,5 +11,4 @@ public interface IWebSocketClient {
     Task Send(string message);
 
     WebSocketClientState State { get; }
-
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Parse.Infrastructure.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -24,13 +25,21 @@ public abstract class SessionClientOperation : IClientOperation {
 
     public string ToJson()
     {
+        
         IDictionary<string, object> jsonObject = ToJsonObject();
+                
         if (_sessionToken != null)
         {
-            jsonObject.Add("sessionToken", _sessionToken);
+            if (!jsonObject.ContainsKey("sessionToken"))
+            {
+        
+                jsonObject.Add("sessionToken", _sessionToken);
+            }
         }
-        return JsonSerializer.Serialize(jsonObject);
+        return JsonUtilities.Encode(jsonObject);
+        
     }
+
 
     protected abstract IDictionary<string, object> ToJsonObject();
 

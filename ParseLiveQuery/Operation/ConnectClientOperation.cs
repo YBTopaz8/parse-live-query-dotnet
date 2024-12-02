@@ -21,7 +21,6 @@ public class ConnectClientOperation : SessionClientOperation {
         ["applicationId"] = _applicationId,
         ["clientKey"] = _clientKey,
         ["sessionToken"] = _sessionToken
-
     };
 
 }
