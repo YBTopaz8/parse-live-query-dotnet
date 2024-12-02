@@ -6,7 +6,7 @@
 
 Here is a full YouTube video walking through what it is, and how to use it.
 
-https://youtu.be/OlpHIJDvl7E
+[https://youtu.be/OlpHIJDvl7E](https://youtu.be/V-cUjq7Js84)
 
 
 Here is the full ReadMe;
