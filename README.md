@@ -16,6 +16,22 @@ Since I Updated this based on my MAUI Projects, I had to update my fork of Parse
 
 Will release a Nuget version later for both.
 
+### What are Live Queries?
+Glad you asked!
+So to put it VERY SIMPLE : Live Queries lets you build a **RealTime Chat App** in less than idk 25 lines of code? (Excluding UI ofc).
+
+In "Long" it essentially opens a **Websocket/caller-listener tunnel** where _WHATEVER_ changes done to the subscribed class/table(for sql folks), will reflect to ALL listening clients in "real time" (very very minimal delay. Like and Eye blink's delay!)
+
+Example: You Create a Class/Table (for SQL folks) then tell the server "Whatever is done here _TELL EVERYONE WHO NEEDS TO BE INFORMED ASAP_ ", then the client apps (your developed app) will subscribe to the _EVENTUAL POSSIBILITIES_ of any change happening to your class/table records.
+
+As such. 
+1. Device A Subscribes to class/table "Comments" found in Server.
+2. Device B subscribes to "Comments" too.
+3. Device A -> Server (A sends to server)
+4. Device A <- Server -> Device B (Server sends back data to both devices _ASSUMING THEY ARE ALLOWED TO VIEW THE CHANGES_, you can configure this with ACL!)
+
+I hope it's a OVERexplanation now haha! But if you any more specific questions, please shoot!
+
 How To Use In addition to the docs over from the folks at ;
 For now:
 
