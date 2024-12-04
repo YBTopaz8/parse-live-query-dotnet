@@ -165,7 +165,7 @@ public class CLASS_NAME_FOR_LISTENERCLASS: ObservableObject, IParseLiveQueryClie
 ```
 That's it!
 I'll be updating the SDK with any new features if any, The .NET SDK had no Equivalent but we do now ! 
-This is a simple "Port" with no real fixes implemented (except for unwanted crashes) and no security updates either. 
+This is a simple "Port" with ~~no real fixes implemented~~ Fixes from the Parse SDK itself, and some PRs from the forked repo (and except for unwanted crashes) and no security updates (if any, after Nov 27th 2024, when I prepared this release)~~either~~.
 PRs are welcomed!
 - Many thanks to [JohnMcPherson](https://github.com/JonMcPherson/parse-live-query-dotnet) for [Parse-Live-Query-Dotnet](https://github.com/JonMcPherson/parse-live-query-dotnet) . I would absolutely NOT have done it  without you!
 - [Parse Community](https://github.com/parse-community)
