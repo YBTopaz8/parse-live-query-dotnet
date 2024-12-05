@@ -1,22 +1,39 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFrameworks>net9.0</TargetFrameworks>
     <AssemblyName>YBParseLiveQuery</AssemblyName>
     <RootNamespace>YB.Parse.LiveQuery</RootNamespace>
-    <!-- NuGet Metadata -->
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageId>ParseLiveQueryDOTNET</PackageId>
+    <PackageId>YB.ParseLiveQueryDotNet</PackageId>
     <Version>1.0.0</Version>
     <Authors>YvanBrunel</Authors>
     <Company>None</Company>
     <Description>A .NET 9.0 library for Parse Live Query. Compatible With .NET MAUI for Windows, Android, MacOS (very very likely iOS too)</Description>
-    <PackageTags>Parse, LiveQuery, .NET</PackageTags>
+    <PackageTags>Parse, LiveQuery, .NET8; MAUI; CROSS-PLATFORM;</PackageTags>
     <RepositoryUrl>https://github.com/YBTopaz8/parse-live-query-dotnet</RepositoryUrl>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+
+    <PackageReadmFile>ReadMe.md</PackageReadmFile>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\ParseServer\Parse\Parse.csproj" />
+    <Content Include="..\..\ParseServer\Parse\bin\Release\net9.0\Parse.dll">
+      <Pack>true</Pack>
+      <PackagePath>lib\net9.0\</PackagePath>
+    </Content>
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Include="ReadMe.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>
