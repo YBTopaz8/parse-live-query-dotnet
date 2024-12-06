@@ -9,7 +9,7 @@
     <Authors>YvanBrunel</Authors>
     <Company>None</Company>
     <Description>A .NET 9.0 library for Parse Live Query. Compatible With .NET MAUI for Windows, Android, MacOS (very very likely iOS too)</Description>
-    <PackageTags>Parse, LiveQuery, .NET8; MAUI; CROSS-PLATFORM;</PackageTags>
+    <PackageTags>Parse, Parse-Server, LiveQuery, .NET9, .NET-MAUI, Cross-Platform, Android, Windows, MacOS, iOS, Real-Time</PackageTags>
     <RepositoryUrl>https://github.com/YBTopaz8/parse-live-query-dotnet</RepositoryUrl>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
 
@@ -35,5 +35,9 @@
   
   <ItemGroup>
     <None Include="ReadMe.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\ParseServer\Parse\Parse.csproj" />
   </ItemGroup>
 </Project>
