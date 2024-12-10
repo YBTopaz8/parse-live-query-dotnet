@@ -1,12 +1,8 @@
 ﻿using Parse.Infrastructure.Utilities;
-using System;
 using System.Collections.Generic;
-using System.Text;
-
-using System.Text.Json;
 
 
-namespace Parse.LiveQuery; 
+namespace Parse.LiveQuery;
 /// <summary>
 /// If you provide the sessionToken, when the LiveQuery server gets ParseObject
 /// updates from the Parse server, it will try to check whether the sessionToken fulfills

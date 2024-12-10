@@ -36,4 +36,8 @@
   <ItemGroup>
     <None Include="ReadMe.md" Pack="true" PackagePath="/" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\ParseServer\Parse\Parse.csproj" />
+  </ItemGroup>
 </Project>

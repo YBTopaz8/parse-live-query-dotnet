@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 
-namespace Parse.LiveQuery; 
+namespace Parse.LiveQuery;
 
 // Interface used to abstract the concurrency of async operations in the ParseLiveQueryClient class.
 // Used by unit tests to make ParseLiveQueryClient operations execute synchronously

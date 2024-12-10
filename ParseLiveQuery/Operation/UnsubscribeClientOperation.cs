@@ -1,8 +1,7 @@
 ﻿using Parse.Infrastructure.Utilities;
 using System.Collections.Generic;
-using System.Text.Json;
 
-namespace Parse.LiveQuery; 
+namespace Parse.LiveQuery;
 public class UnsubscribeClientOperation : IClientOperation {
 
     private readonly int _requestId;
