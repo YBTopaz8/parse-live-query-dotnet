@@ -20,7 +20,6 @@ public class WebSocketClient : IWebSocketClient
     private readonly Subject<WebSocketState> _stateChanges = new(); 
     private WebSocketState _currentState;
 
-    public WebSocketState State => _currentState;
     private readonly Subject<string> _messages = new();
     private readonly Subject<Exception> _errors = new();
 
@@ -32,6 +31,8 @@ public class WebSocketClient : IWebSocketClient
     public IQbservable<WebSocketState> StateChanges => _stateChanges.AsQbservable();
     public IQbservable<string> Messages => _messages.AsQbservable();
     public IQbservable<Exception> Errors => _errors.AsQbservable();
+
+    public WebSocketState State { get; private set; }
 
 
     public async void Open()
@@ -73,7 +74,7 @@ public class WebSocketClient : IWebSocketClient
         {
             var buffer = Encoding.UTF8.GetBytes(message);
             var segment = new ArraySegment<byte>(buffer);
-            await _webSocket.SendAsync(segment, WebSocketMessageType.Text, true, _cancellationTokenSource.Token);
+            await _webSocket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -103,5 +104,9 @@ public class WebSocketClient : IWebSocketClient
             }
         }
     }
-
+    private void SetState(WebSocketState state)
+    {
+        State = state;
+        _stateChanges.OnNext(state);
+    }
 }
