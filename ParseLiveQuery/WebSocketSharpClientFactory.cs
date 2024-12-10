@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Net.WebSockets;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,149 +10,95 @@ namespace Parse.LiveQuery;
 
 public class WebSocketClient : IWebSocketClient
 {
-    public static readonly WebSocketClientFactory Factory = (hostUri, callback) => new WebSocketClient(hostUri, callback);
+    public static readonly WebSocketClientFactory Factory = (hostUri) => new WebSocketClient(hostUri);
 
-    private readonly object _mutex = new object();
+
     private readonly Uri _hostUri;
-    private readonly IWebSocketClientCallback _webSocketClientCallback;
+    private readonly ClientWebSocket _webSocket;
+    private readonly CancellationTokenSource _cts;
 
-    private volatile WebSocketClientState _state = WebSocketClientState.None;
-    private ClientWebSocket _webSocket;
-    private CancellationTokenSource _cancellationTokenSource;
+    private readonly Subject<WebSocketState> _stateChanges = new();
+    private readonly Subject<string> _messages = new();
+    private readonly Subject<Exception> _errors = new();
 
-    public WebSocketClient(Uri hostUri, IWebSocketClientCallback webSocketClientCallback)
+    public WebSocketClient(Uri hostUri)
     {
         _hostUri = hostUri;
-        _webSocketClientCallback = webSocketClientCallback;
+        _webSocket = new ClientWebSocket();
+        _cts = new CancellationTokenSource();
     }
 
-    public WebSocketClientState State => _state;
+    public IQbservable<WebSocketState> StateChanges => _stateChanges.AsQbservable();
+    public IQbservable<string> Messages => _messages.AsQbservable();
+    public IQbservable<Exception> Errors => _errors.AsQbservable();
 
-    public async Task Open()
+    public WebSocketState State => throw new NotImplementedException();
+
+    public async void Open()
     {
-        await SynchronizeWhen(WebSocketClientState.None, async () =>
-        {
-            _cancellationTokenSource = new CancellationTokenSource();
-            _webSocket = new ClientWebSocket();
-            _state = WebSocketClientState.Connecting;
-
-            try
-            {
-                await _webSocket.ConnectAsync(_hostUri, _cancellationTokenSource.Token);
-                _state = WebSocketClientState.Connected;
-                _webSocketClientCallback.OnOpen();
-
-                _ = StartReceivingAsync(); // Start receiving messages
-            }
-            catch (Exception ex)
-            {
-                _state = WebSocketClientState.Disconnected;
-                _webSocketClientCallback.OnError(ex);
-            }
-        });
-    }
-
-    public async Task Close()
-    {
-        await SynchronizeWhenNot(WebSocketClientState.None, async () =>
-        {
-            _state = WebSocketClientState.Disconnecting;
-
-            try
-            {
-                _cancellationTokenSource?.Cancel();
-                await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "User invoked close", CancellationToken.None);
-            }
-            catch (Exception ex)
-            {
-                _webSocketClientCallback.OnError(ex);
-            }
-            finally
-            {
-                _state = WebSocketClientState.Disconnected;
-                _webSocketClientCallback.OnClose();
-            }
-        });
-    }
-
-    public async Task Send(string message)
-    {
-        await SynchronizeWhen(WebSocketClientState.Connected, async () =>
-        {
-            try
-            {
-                var buffer = Encoding.UTF8.GetBytes(message);
-                var segment = new ArraySegment<byte>(buffer);
-                await _webSocket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None);
-                
-            }
-            catch (Exception ex)
-            {
-                _webSocketClientCallback.OnError(ex);
-            }
-        });
-    }
-
-    private async Task StartReceivingAsync()
-    {
-        var buffer = new ArraySegment<byte>(new byte[8192]);
-
         try
         {
-            while (_state == WebSocketClientState.Connected && !_cancellationTokenSource.Token.IsCancellationRequested)
-            {
-                WebSocketReceiveResult result = await _webSocket.ReceiveAsync(buffer, _cancellationTokenSource.Token);
-
-                if (result.MessageType == WebSocketMessageType.Close)
-                {
-                    _state = WebSocketClientState.Disconnected;
-                    _webSocketClientCallback.OnClose();
-                    break;
-                }
-
-                var message = Encoding.UTF8.GetString(buffer.Array, 0, result.Count);
-                _webSocketClientCallback.OnMessage(message);
-            }
+            _stateChanges.OnNext(WebSocketState.Connecting);
+            await _webSocket.ConnectAsync(_hostUri, _cts.Token);
+            _stateChanges.OnNext(WebSocketState.Open);
+            _ = ReceiveLoopAsync(); // Start receiving messages
         }
         catch (Exception ex)
         {
-            _webSocketClientCallback.OnError(ex);
-            _state = WebSocketClientState.Disconnected;
+            _errors.OnNext(ex);
+            _stateChanges.OnNext(WebSocketState.Error);
         }
     }
 
-    // Synchronization Helpers
 
-    private async Task SynchronizeAsync(Func<Task> action, Func<bool> predicate = null)
+    public async void Close()
     {
-        predicate ??= () => true; // Default predicate ensures it's never null
-
-        bool stateChanged = false;
-        lock (_mutex)
+        try
         {
-            var previousState = _state;
-            if (predicate())
+            _stateChanges.OnNext(WebSocketState.Closed);
+            _cts.Cancel();
+            await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by user", CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _errors.OnNext(ex);
+        }
+    }
+    public async Task Send(string message)
+    {
+        try
+        {
+            var buffer = Encoding.UTF8.GetBytes(message);
+            var segment = new ArraySegment<byte>(buffer);
+            await _webSocket.SendAsync(segment, WebSocketMessageType.Text, true, _cts.Token);
+        }
+        catch (Exception ex)
+        {
+            _errors.OnNext(ex);
+        }
+    }
+    private async Task ReceiveLoopAsync()
+    {
+        var buffer = new byte[8192];
+        while (_webSocket.State == System.Net.WebSockets.WebSocketState.Open && !_cts.Token.IsCancellationRequested)
+        {
+            try
             {
-                stateChanged = true; // State is allowed to change
+                var result = await _webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), _cts.Token);
+                if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    _stateChanges.OnNext(WebSocketState.Closed);
+                    break;
+                }
+
+                var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                _messages.OnNext(message);
+            }
+            catch (Exception ex)
+            {
+                _errors.OnNext(ex);
             }
         }
-
-        // Perform actions outside of the lock to avoid deadlocks
-        if (stateChanged)
-        {
-            await action().ConfigureAwait(false); // Ensure proper task continuation without capturing context
-            _webSocketClientCallback.OnStateChanged();
-        }
     }
 
-
-    private async Task SynchronizeWhen(WebSocketClientState state, Func<Task> action)
-    {
-        await SynchronizeAsync(action, () => _state == state);
-    }
-
-    private async Task SynchronizeWhenNot(WebSocketClientState state, Func<Task> action)
-    {
-        await SynchronizeAsync(action, () => _state != state);
-    }
 }

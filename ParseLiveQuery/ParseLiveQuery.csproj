@@ -1,11 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net9.0</TargetFrameworks>
+    <TargetFrameworks>net5.0;net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
     <AssemblyName>YBParseLiveQuery</AssemblyName>
     <RootNamespace>YB.Parse.LiveQuery</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <LangVersion>latest</LangVersion>
     <PackageId>YB.ParseLiveQueryDotNet</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Authors>YvanBrunel</Authors>
     <Company>None</Company>
     <Description>A .NET 9.0 library for Parse Live Query. Compatible With .NET MAUI for Windows, Android, MacOS (very very likely iOS too)</Description>
@@ -17,6 +18,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
+    <PackageReference Include="System.Reactive" Version="6.0.1" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\..\ParseServer\Parse\bin\Release\net9.0\Parse.dll">
@@ -38,6 +40,6 @@
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\..\ParseServer\Parse\Parse.csproj" />
+    <ProjectReference Include="..\..\..\Parse-SDK-dotNET\Parse\Parse.csproj" />
   </ItemGroup>
 </Project>

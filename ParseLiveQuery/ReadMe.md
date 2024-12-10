@@ -1,5 +1,5 @@
 ### Parse-Live-Query-Unofficial
-- Added Support for .NET 9 and .NET MAUI.
+- Added Support for (.NET 5,6,7,8,9) .NET 9 and .NET MAUI.
 - Replaced previous web client with `System.Net.WebSockets.Client` as I believe is better.
 - Should be FULLY compatible with .NET 9 and MAUI.
 
