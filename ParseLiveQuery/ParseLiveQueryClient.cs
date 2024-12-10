@@ -25,7 +25,7 @@ namespace Parse.LiveQuery
         private readonly ITaskQueue _taskQueue;
 
         private readonly ConcurrentDictionary<int, Subscription> _subscriptions = new ConcurrentDictionary<int, Subscription>();
-       
+
         private IWebSocketClient _webSocketClient;
         private int _requestIdCount = 1;
         private bool _userInitiatedDisconnect;
@@ -36,14 +36,14 @@ namespace Parse.LiveQuery
         private readonly Subject<LiveQueryException> _errorSubject = new Subject<LiveQueryException>();                       // ADDED
         private readonly Subject<(int requestId, Subscription subscription)> _subscribedSubject = new Subject<(int, Subscription)>();       // ADDED
         private readonly Subject<(int requestId, Subscription subscription)> _unsubscribedSubject = new Subject<(int, Subscription)>();     // ADDED
-        private readonly Subject<(Subscription.Event evt, IObjectState state, Subscription subscription)> _objectEventSubject = new Subject<(Subscription.Event, IObjectState, Subscription)>(); // ADDED
+        private readonly Subject<(Subscription.Event evt, ParseObject parseObject, Subscription subscription)> _objectEventSubject = new Subject<(Subscription.Event, ParseObject, Subscription)>(); // ADDED
 
         public IObservable<ParseLiveQueryClient> OnConnected => _connectedSubject.AsObservable();                          // ADDED
         public IObservable<(ParseLiveQueryClient client, bool userInitiated)> OnDisconnected => _disconnectedSubject.AsObservable(); // ADDED
         public IObservable<LiveQueryException> OnError => _errorSubject.AsObservable();                                    // ADDED
         public IObservable<(int requestId, Subscription subscription)> OnSubscribed => _subscribedSubject.AsObservable();   // ADDED
         public IObservable<(int requestId, Subscription subscription)> OnUnsubscribed => _unsubscribedSubject.AsObservable(); // ADDED
-        public IObservable<(Subscription.Event evt, IObjectState state, Subscription subscription)> OnObjectEvent => _objectEventSubject.AsObservable(); // ADDED
+        public IObservable<(Subscription.Event evt, ParseObject parseObject, Subscription subscription)> OnObjectEvent => _objectEventSubject.AsObservable(); // ADDED
 
 
         public ParseLiveQueryClient() : this(GetDefaultUri()) { }
@@ -127,6 +127,8 @@ namespace Parse.LiveQuery
                     Debug.WriteLine("Disconnected");
                     Reconnect();
                     break;
+                default:
+                    break;
             }
         }
 
@@ -180,7 +182,7 @@ namespace Parse.LiveQuery
             _webSocketClient?.Close();
             _userInitiatedDisconnect = false;
             _hasReceivedConnected = false;
-            _webSocketClient = _webSocketClientFactory(_hostUri);
+            _webSocketClient = _webSocketClientFactory(_hostUri, _webSocketClientCallback);
             _webSocketClient.Open();
         }
 
@@ -217,7 +219,12 @@ namespace Parse.LiveQuery
 
         private bool IsConnected()
         {
-            var e = _hasReceivedConnected && GetWebSocketState() == WebSocketClientState.Connected;
+            var wsState = GetWebSocketState();
+            if (wsState == WebSocketClientState.Connected)
+            {
+
+            }
+            var e = _hasReceivedConnected;
             return e;
         }
 
@@ -381,10 +388,14 @@ namespace Parse.LiveQuery
                 if (_subscriptions.TryGetValue(requestId, out var subscription))
                 {
                     var objState = (IObjectState)ParseClient.Instance.Decoder.Decode(objectData, ParseClient.Instance.Services);
+
+
+                    // Convert objState to ParseObject
+                    var parseObject = ConvertToParseObject(objState);
                     subscription.DidReceive(subscription.QueryObj, subscriptionEvent, objState);
 
                     // CHANGED: Instead of callback-based dispatch, use Rx subject for object events
-                    _objectEventSubject.OnNext((subscriptionEvent, objState, subscription)); // ADDED
+                    _objectEventSubject.OnNext((subscriptionEvent, parseObject, subscription)); // ADDED
                 }
 
             }
@@ -457,7 +468,7 @@ namespace Parse.LiveQuery
 
         private void OnWebSocketError(Exception exception)
         {
-            _errorSubject.OnNext(new LiveQueryException.UnknownException("Socket error", exception)); 
+            _errorSubject.OnNext(new LiveQueryException.UnknownException("Socket error", exception));
             _disconnectedSubject.OnNext((this, _userInitiatedDisconnect)); // ADDED
         }
 
@@ -478,6 +489,7 @@ namespace Parse.LiveQuery
                     await _client.SendOperationWithSessionAsync(session =>
                         new ConnectClientOperation(_client._applicationId, _client._clientKey, session))
                         .ConfigureAwait(false);
+
                 }
                 catch (Exception ex)
                 {
@@ -519,7 +531,7 @@ namespace Parse.LiveQuery
 
             public void OnStateChanged()
             {
-                
+
                 // No callback needed
             }
         }
@@ -570,6 +582,43 @@ namespace Parse.LiveQuery
                 }
             }
         }
+
+        private ParseObject ConvertToParseObject(IObjectState objState)
+        {
+            try
+            {
+                // Get the class name from the object state
+                string className = objState.ClassName;
+                if (string.IsNullOrEmpty(className))
+                {
+                    throw new InvalidOperationException("ClassName is not defined in the object state.");
+                }
+
+                // Find the type that matches the class name
+                Type targetType = Type.GetType($"YourNamespace.{className}", throwOnError: false, ignoreCase: true);
+                if (targetType == null || !typeof(ParseObject).IsAssignableFrom(targetType))
+                {
+                    throw new InvalidOperationException($"No matching ParseObject class found for ClassName: {className}");
+                }
+
+                // Create an instance of the target type
+                var parseObject = (ParseObject)Activator.CreateInstance(targetType);
+
+                // Populate the ParseObject with the object state
+                foreach (var kvp in objState)
+                {
+                    parseObject[kvp.Key] = kvp.Value;
+                }
+
+                return parseObject;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in ConvertToParseObject: {ex.Message}");
+                throw;
+            }
+        }
+
     }
 }
 public interface IWebSocketClientCallback

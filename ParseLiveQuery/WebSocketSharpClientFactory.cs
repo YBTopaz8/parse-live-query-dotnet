@@ -10,10 +10,11 @@ namespace Parse.LiveQuery;
 
 public class WebSocketClient : IWebSocketClient
 {
-    public static readonly WebSocketClientFactory Factory = (hostUri) => new WebSocketClient(hostUri);
+    public static readonly WebSocketClientFactory Factory = (hostUri, callback) => new WebSocketClient(hostUri, callback);
 
 
     private readonly Uri _hostUri;
+    private readonly IWebSocketClientCallback _webSocketClientCallback;
     private ClientWebSocket _webSocket;
     private CancellationTokenSource _cancellationTokenSource;
 
@@ -23,9 +24,10 @@ public class WebSocketClient : IWebSocketClient
     private readonly Subject<string> _messages = new();
     private readonly Subject<Exception> _errors = new();
 
-    public WebSocketClient(Uri hostUri)
+    public WebSocketClient(Uri hostUri, IWebSocketClientCallback webSocketClientCallback)
     {
         _hostUri = hostUri;
+        _webSocketClientCallback = webSocketClientCallback;
         _webSocket = new ClientWebSocket();        
     }
     public IQbservable<WebSocketState> StateChanges => _stateChanges.AsQbservable();
@@ -41,14 +43,17 @@ public class WebSocketClient : IWebSocketClient
 
         _webSocket = new ClientWebSocket();
         _stateChanges.OnNext(WebSocketState.Connecting);
+        
         try
         {
             await _webSocket.ConnectAsync(_hostUri, _cancellationTokenSource.Token);
             _stateChanges.OnNext(WebSocketState.Open);
+            _webSocketClientCallback.OnOpen();
             _ = ReceiveLoopAsync(); // Start receiving messages
         }
         catch (Exception ex)
         {
+            _webSocketClientCallback.OnError(ex);
             _errors.OnNext(ex);
             _stateChanges.OnNext(WebSocketState.Error);
         }
@@ -67,9 +72,20 @@ public class WebSocketClient : IWebSocketClient
         {
             _errors.OnNext(ex);
         }
-    }
+        finally
+        {
+            _webSocketClientCallback.OnClose();
+        }
+}
     public async Task Send(string message)
     {
+        if (_webSocket.State != System.Net.WebSockets.WebSocketState.Open)
+        {
+            var exception = new InvalidOperationException("WebSocket is not connected.");
+            _errors.OnNext(exception);
+            _webSocketClientCallback.OnError(exception);
+            return;
+        }
         try
         {
             var buffer = Encoding.UTF8.GetBytes(message);
@@ -79,6 +95,7 @@ public class WebSocketClient : IWebSocketClient
         catch (Exception ex)
         {
             _errors.OnNext(ex);
+            _webSocketClientCallback.OnError(ex);
         }
     }
     private async Task ReceiveLoopAsync()
@@ -92,15 +109,18 @@ public class WebSocketClient : IWebSocketClient
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
                     _stateChanges.OnNext(WebSocketState.Closed);
+                    _webSocketClientCallback.OnClose();
                     break;
                 }
 
                 var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
                 _messages.OnNext(message);
+                _webSocketClientCallback.OnMessage(message);
             }
             catch (Exception ex)
             {
                 _errors.OnNext(ex);
+                _webSocketClientCallback.OnError(ex);
             }
         }
     }
