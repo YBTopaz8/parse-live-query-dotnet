@@ -1,6 +1,4 @@
-﻿using Parse.Infrastructure.Utilities;
-using System;
-using System.Threading;
+﻿using System;
 using System.Threading.Tasks;
 
 namespace Parse.LiveQuery;
