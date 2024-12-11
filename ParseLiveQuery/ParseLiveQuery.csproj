@@ -58,6 +58,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\ParseServer\Parse\Parse.csproj" />
+    <ProjectReference Include="..\..\..\Parse-SDK-dotNET\Parse\Parse.csproj" />
   </ItemGroup>
 </Project>

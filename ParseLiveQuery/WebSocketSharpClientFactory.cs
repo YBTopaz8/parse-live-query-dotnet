@@ -124,9 +124,4 @@ public class WebSocketClient : IWebSocketClient
             }
         }
     }
-    private void SetState(WebSocketState state)
-    {
-        State = state;
-        _stateChanges.OnNext(state);
-    }
 }
