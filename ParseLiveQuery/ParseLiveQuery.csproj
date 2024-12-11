@@ -13,7 +13,7 @@
     <PackageTags>Parse, LiveQuery, .NET, MAUI, CROSS-PLATFORM, LINQ, ReactiveX</PackageTags>
     <RepositoryUrl>https://github.com/YBTopaz8/parse-live-query-dotnet</RepositoryUrl>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageReadmFile>ReadMe.md</PackageReadmFile>
+    <PackageReadmeFile>ReadMe.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>

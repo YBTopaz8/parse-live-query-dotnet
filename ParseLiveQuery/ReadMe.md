@@ -1,172 +1,375 @@
-### Parse-Live-Query-Unofficial
-- Added Support for (.NET 5,6,7,8,9) .NET 9 and .NET MAUI.
-- Replaced previous web client with `System.Net.WebSockets.Client` as I believe is better.
-- Should be FULLY compatible with .NET 9 and MAUI.
+# Parse-Live-Query-Unofficial v2 (with RX and LINQ Support)
 
+**Key Changes from v1:**  
+- Now supports .NET 5, 6, 7, 8, and .NET MAUI.  
+- Uses `System.Net.WebSockets.Client` for better connectivity.  
+- Replaced callbacks (CB) with Reactive Extensions (Rx.NET) for event handling.  
+- Full LINQ support integrated.  
+- Enhanced stability and MAUI compatibility.
 
-Here is a full YouTube video walking through what it is, and how to use it.
+**Big Ups** to:
+- [JonMcPherson](https://github.com/JonMcPherson/parse-live-query-dotnet) for original Parse Live Query dotnet code.  
+- [Parse Community](https://github.com/parse-community) for Parse SDK.  
+- My [Parse-SDK fork](https://github.com/YBTopaz8/Parse-SDK-dotNET) which this depends on.  
 
-[https://youtu.be/OlpHIJDvl7E](https://youtu.be/V-cUjq7Js84)
+## What is Live Query?
+Live Query provides real-time data sync between server and clients over WebSockets. When data changes on the server, subscribed clients are instantly notified.
 
+## Prerequisites
+- Ensure Live Query is enabled for your classes in the Parse Dashboard.
 
-Here is the full ReadMe;
+Example in Back4App:  
+![Enable LQ](https://github.com/user-attachments/assets/b9cba805-f81a-47e2-a999-ce6864ba438a)
 
-Since I Updated this based on my MAUI Projects, I had to update my fork of Parse SDK to have MAUI support, thus 
-## THIS is DEPENDENT on my [ParseSDK fork](https://github.com/YBTopaz8/Parse-SDK-dotNET). 
+## Basic Setup
 
-Will release a Nuget version later for both.
+### 1. Initialization
+```csharp
+using Parse; // Parse
+using Parse.LiveQuery; // ParseLQ
+using System.Net;
+using System.Diagnostics;
+using System.Reactive.Linq; // For Rx
+using System.Linq; // For LINQ
+using System.Collections.ObjectModel;
 
-### What are Live Queries?
-Glad you asked!
-So to put it VERY SIMPLE : Live Queries lets you build a **RealTime Chat App** in less than idk 25 lines of code? (Excluding UI ofc).
-
-In "Long" it essentially opens a **Websocket/caller-listener tunnel** where _WHATEVER_ changes done to the subscribed class/table(for sql folks), will reflect to ALL listening clients in "real time" (very very minimal delay. Like and Eye blink's delay!)
-
-Example: You Create a Class/Table (for SQL folks) then tell the server "Whatever is done here _TELL EVERYONE WHO NEEDS TO BE INFORMED ASAP_ ", then the client apps (your developed app) will subscribe to the _EVENTUAL POSSIBILITIES_ of any change happening to your class/table records.
-
-As such. 
-1. Device A Subscribes to class/table "Comments" found in Server.
-2. Device B subscribes to "Comments" too.
-3. Device A -> Server (A sends to server)
-4. Device A <- Server -> Device B (Server sends back data to both devices _ASSUMING THEY ARE ALLOWED TO VIEW THE CHANGES_, you can configure this with ACL!)
-
-I hope it's a OVERexplanation now haha! But if you any more specific questions, please shoot!
-
-How To Use In addition to the docs over from the folks at ;
-For now:
-
-### STEP 0 (VERY IMPORTANT): MAKE SURE YOUR ENABLE LIVE QUERY ON THE CLASSES NEEDED.
-I used Back4Apps for dev/testing so the 2 classes I needed were checked!
-![image](https://github.com/user-attachments/assets/b9cba805-f81a-47e2-a999-ce6864ba438a)
-
-
-### 1. Download the project's source and add to your solution , your solution will look like this
-![image](https://github.com/user-attachments/assets/94a9b76d-20bb-4ec0-9fb6-ede63767a608)
-### 2. You will have to initialize your ParseClient with your app's details
-```
-// Check for internet connection
+// Check internet
 if (Connectivity.NetworkAccess != NetworkAccess.Internet)
 {
-    Console.WriteLine("No Internet Connection: Unable to initialize ParseClient.");
-    return false;
+    Console.WriteLine("No Internet, can't init ParseClient.");
+    return;
 }
 
-// Create ParseClient
-ParseClient client = new ParseClient(new ServerConnectionData
+// Init ParseClient
+var client = new ParseClient(new ServerConnectionData
 {
-    ApplicationID = APIKeys.ApplicationId, 
-    ServerURI = APIKeys.ServerUri,
-    Key = APIKeys.DotNetKEY, // Or use MASTERKEY
-
-}
-);
-HostManifestData manifest = new HostManifestData() // Optional but I really recommend setting just to avoid potential crashes
+    ApplicationID = "YOUR_APP_ID",
+    ServerURI = new Uri("YOUR_SERVER_URL"),
+    Key = "YOUR_CLIENT_KEY" // or MasterKey
+}, new HostManifestData
 {
     Version = "1.0.0",
-    Identifier = "com.yvanbrunel.myMauiApp",
-    Name = "myAppName",
-};
+    Identifier = "com.yourcompany.yourmauiapp",
+    Name = "MyMauiApp"
+});
 
-client.Publicize(); // Best to use if you want to access ParseClient.Instance anywhere in the app.
+client.Publicize(); // Access via ParseClient.Instance globally
 ```
-### 3. Setup Live Queries
 
-A subscription can be very easily handled as such;
-```
+### 2. Simple Subscription Setup
+```csharp
+// Create LiveQuery client
 ParseLiveQueryClient LiveClient = new ParseLiveQueryClient();
- async Task SetupLiveQuery()
- {
-     try
-     {
-         var query = ParseClient.Instance.GetQuery("CLASS_TO_SUB_TO");
-         //.WhereEqualTo("IsDeleted", false); Condition where App/Server will communicate
 
-         var subscription = LiveClient.Subscribe(query); // You subscribe here
-        
-//optional
- LiveClient.RegisterListener(this); // This is important is you need to reach to Web Connection changes
-
-
-         sub.HandleSubscribe(async query =>
-         {
-             await Shell.Current.DisplayAlert("Subscribed", "Subscribed to query", "OK");
-             Debug.WriteLine($"Subscribed to query: {query.GetClassName()}"); 
-         })
-         .HandleEvents((query, objEvent, obj) =>
-         {
-             var object = obj  // will be the data returned by server. Could be new data, Same data or no data (After a Create, Read/Update/ Delete respectively)
-
-             if (objEvent == Subscription.Event.Create) // if data was added to DAB online
-             {
-
-             }
-             else if (objEvent == Subscription.Event.Update) //Data was updated
-             {
-                 var f = Messages.FirstOrDefault(newComment);
-                 if (f is not null)
-                 {
-
-                 }
-             }
-             else if (objEvent == Subscription.Event.Delete) //Data Removed from DB online
-             {
-            
-             }
-             Debug.WriteLine($"Event {objEvent} occurred for object: {obj.ObjectId}");
-         })
-         .HandleError((query, exception) =>
-         {
-             Debug.WriteLine($"Error in query for class {query.GetClassName()}: {exception.Message}");
-         })
-         .HandleUnsubscribe(query =>
-         {
-             Debug.WriteLine($"Unsubscribed from query: {query.GetClassName()}");
-         });
-
-         // Connect asynchronously 
-//OPTIONAL, but in real world scenarios, you'd better off calling it anyway.
-         await Task.Run(() => LiveClient.ConnectIfNeeded());
-     }
-     catch (IOException ex)
-     {
-         Console.WriteLine($"Connection error: {ex.Message}");
-     }
-     catch (Exception ex)
-     {
-         Debug.WriteLine($"SetupLiveQuery encountered an error: {ex.Message}");
-     }
- }
-```
-If you need a connection listener, you can set a class as 
-```
-public class CLASS_NAME_FOR_LISTENERCLASS: ObservableObject, IParseLiveQueryClientCallbacks
+void SetupLiveQuery()
 {
-//You will NEED to implement 
- public void OnLiveQueryClientConnected(ParseLiveQueryClient client)
- {
-     Debug.WriteLine("Client Connected");
- }
+    try
+    {
+        var query = ParseClient.Instance.GetQuery("TestChat");
+        var subscription = LiveClient.Subscribe(query);
+        
+        LiveClient.ConnectIfNeeded();
 
- public void OnLiveQueryClientDisconnected(ParseLiveQueryClient client, bool userInitiated)
- {
-     Debug.WriteLine("Client Disconnected");
- }
+        // Rx event streams
+        LiveClient.OnConnected
+            .Subscribe(_ => Debug.WriteLine("LiveQuery connected."));
+        LiveClient.OnDisconnected
+            .Subscribe(info => Debug.WriteLine(info.userInitiated 
+                ? "User disconnected." 
+                : "Server disconnected."));
+        LiveClient.OnError
+            .Subscribe(ex => Debug.WriteLine("LQ Error: " + ex.Message));
+        LiveClient.OnSubscribed
+            .Subscribe(e => Debug.WriteLine("Subscribed to: " + e.requestId));
 
- public void OnLiveQueryError(ParseLiveQueryClient client, LiveQueryException reason)
- {
-     Debug.WriteLine("Error " + reason.Message);
- }
+        // Handle object events (Create/Update/Delete)
+        LiveClient.OnObjectEvent
+            .Where(e => e.subscription == subscription)
+            .Subscribe(e =>
+            {
+                Debug.WriteLine($"Event {e.evt} on object {e.objState.ObjectId}");
+            });
 
- public void OnSocketError(ParseLiveQueryClient client, Exception reason)
- {
-     Debug.WriteLine("Socket Error ");
- }
+    }
+    catch (Exception ex)
+    {
+        Debug.WriteLine("SetupLiveQuery Error: " + ex.Message);
+    }
 }
 ```
-That's it!
-I'll be updating the SDK with any new features if any, The .NET SDK had no Equivalent but we do now ! 
-This is a simple "Port" with ~~no real fixes implemented~~ Fixes from the Parse SDK itself, and some PRs from the forked repo (and except for unwanted crashes) and no security updates (if any, after Nov 27th 2024, when I prepared this release)~~either~~.
-PRs are welcomed!
-- Many thanks to [JohnMcPherson](https://github.com/JonMcPherson/parse-live-query-dotnet) for [Parse-Live-Query-Dotnet](https://github.com/JonMcPherson/parse-live-query-dotnet) . I would absolutely NOT have done it  without you!
-- [Parse Community](https://github.com/parse-community)
 
+# Examples
+
+Below are 15+ examples demonstrating LINQ queries, Rx usage, and their combination to handle Live Query events. We will show various scenarios on a hypothetical "TestChat" class with fields: `Message`, `Author`, `CreatedAt`.
+
+**Legend:**  
+- **Simple:** Basic query & subscription.  
+- **Medium:** Introduce some filtering & conditions.  
+- **Robust:** Complex queries, multiple conditions, ordering, and advanced Rx usage.  
+- **Very Robust (LINQ+RX):** Combining reactive operators & LINQ to handle intricate, real-time data flows.
+
+## 7 LINQ Examples (2 Simple, 2 Medium, 3 Robust)
+
+### LINQ Example 1 (Simple): Subscribe to all "TestChat" messages
+```csharp
+var q = ParseClient.Instance.GetQuery("TestChat"); 
+var sub = LiveClient.Subscribe(q);
+LiveClient.OnObjectEvent
+    .Where(e => e.subscription == sub)
+    .Subscribe(e => Debug.WriteLine("New Event: " + e.evt));
+LiveClient.ConnectIfNeeded();
+```
+
+### LINQ Example 2 (Simple): Filter by Author = "John"
+```csharp
+var q = ParseClient.Instance.GetQuery("TestChat")
+    .WhereEqualTo("Author", "John");
+var sub = LiveClient.Subscribe(q);
+LiveClient.OnObjectEvent
+    .Where(e => e.subscription == sub)
+    .Subscribe(e => Debug.WriteLine("John-related event: " + e.objState.ObjectId));
+```
+
+### LINQ Example 3 (Medium): Messages created after a specific date
+```csharp
+DateTime limitDate = DateTime.UtcNow.AddDays(-1);
+var q = ParseClient.Instance.GetQuery("TestChat")
+    .WhereGreaterThan("CreatedAt", limitDate);
+var sub = LiveClient.Subscribe(q);
+LiveClient.OnObjectEvent
+    .Where(e => e.subscription == sub)
+    .Subscribe(e => Debug.WriteLine("Recent message event: " + e.objState.ObjectId));
+```
+
+### LINQ Example 4 (Medium): Filter by Author starting with "A" and has a non-empty "Message"
+```csharp
+var q = ParseClient.Instance.GetQuery("TestChat")
+    .WhereStartsWith("Author", "A")
+    .WhereExists("Message");
+var sub = LiveClient.Subscribe(q);
+LiveClient.OnObjectEvent
+    .Where(e => e.subscription == sub)
+    .Subscribe(e => Debug.WriteLine("A's event: " + e.objState.ObjectId));
+```
+
+### LINQ Example 5 (Robust): Complex filtering by multiple conditions and ordering
+```csharp
+var q = ParseClient.Instance.GetQuery("TestChat")
+    .WhereNotEqualTo("Author", "SpamBot")
+    .WhereGreaterThanOrEqualTo("CreatedAt", DateTime.UtcNow.AddHours(-2))
+    .OrderByDescending("CreatedAt")
+    .Limit(50);
+var sub = LiveClient.Subscribe(q);
+LiveClient.OnObjectEvent
+    .Where(e => e.subscription == sub)
+    .Subscribe(e => 
+    {
+        // Possibly transform object to your model
+        Debug.WriteLine("Robust event: " + e.objState.ObjectId);
+    });
+```
+
+### LINQ Example 6 (Robust): Multiple fields check and ignoring certain authors
+```csharp
+var q = ParseClient.Instance.GetQuery("TestChat")
+    .WhereNotContainedIn("Author", new[] { "BannedUser1", "BannedUser2" })
+    .WhereMatches("Message", "urgent", "i"); // Case-insensitive regex
+var sub = LiveClient.Subscribe(q);
+LiveClient.OnObjectEvent
+    .Where(e => e.subscription == sub)
+    .Subscribe(e => Debug.WriteLine("Urgent event: " + e.objState.ObjectId));
+```
+
+### LINQ Example 7 (Robust): Chain multiple queries using union (not built-in, but simulate using multiple subs)
+```csharp
+// Query 1: Messages from Author = "TeamLead"
+var q1 = ParseClient.Instance.GetQuery("TestChat").WhereEqualTo("Author", "TeamLead");
+// Query 2: Messages containing "ProjectX"
+var q2 = ParseClient.Instance.GetQuery("TestChat").WhereMatches("Message", "ProjectX");
+
+var sub1 = LiveClient.Subscribe(q1);
+var sub2 = LiveClient.Subscribe(q2);
+
+LiveClient.OnObjectEvent
+    .Where(e => e.subscription == sub1 || e.subscription == sub2)
+    .Subscribe(e => Debug.WriteLine("TeamLead/ProjectX Event: " + e.objState.ObjectId));
+```
+
+## 6 Rx Examples (2 Simple, 2 Medium, 2 Robust)
+
+### RX Example 1 (Simple): OnConnected, OnDisconnected logging
+```csharp
+LiveClient.OnConnected.Subscribe(_ => Debug.WriteLine("Connected via Rx."));
+LiveClient.OnDisconnected.Subscribe(info => Debug.WriteLine("Disconnected via Rx."));
+LiveClient.ConnectIfNeeded();
+```
+
+### RX Example 2 (Simple): OnError retry logic
+```csharp
+LiveClient.OnError
+    .Retry(3) // Try reconnect or re-subscribe up to 3 times
+    .Subscribe(ex => Debug.WriteLine("Error after retries: " + ex.Message));
+```
+
+### RX Example 3 (Medium): Buffer incoming Create events for batch processing
+```csharp
+var subscription = LiveClient.Subscribe(ParseClient.Instance.GetQuery("TestChat"));
+LiveClient.OnObjectEvent
+    .Where(e => e.subscription == subscription && e.evt == Subscription.Event.Create)
+    .Buffer(TimeSpan.FromSeconds(5)) // Collect events for 5s
+    .Subscribe(batch =>
+    {
+        Debug.WriteLine($"Received {batch.Count} new messages in last 5s.");
+    });
+LiveClient.ConnectIfNeeded();
+```
+
+### RX Example 4 (Medium): Throttle frequent updates
+```csharp
+var sub = LiveClient.Subscribe(ParseClient.Instance.GetQuery("TestChat"));
+LiveClient.OnObjectEvent
+    .Where(e => e.subscription == sub && e.evt == Subscription.Event.Update)
+    .Throttle(TimeSpan.FromSeconds(2)) // If multiple updates occur quickly, take the last after 2s
+    .Subscribe(e => Debug.WriteLine("Throttled update event: " + e.objState.ObjectId));
+```
+
+### RX Example 5 (Robust): Combine OnError and OnObjectEvent streams
+```csharp
+var sub = LiveClient.Subscribe(ParseClient.Instance.GetQuery("TestChat"));
+var events = LiveClient.OnObjectEvent.Where(e => e.subscription == sub);
+var errors = LiveClient.OnError;
+
+events.Merge(errors.Select(ex => new ObjectEventArgs { evt = Subscription.Event.Enter, objState = null }))
+    .Subscribe(e =>
+    {
+        if (e.objState == null)
+            Debug.WriteLine("Merged: Error event occurred.");
+        else
+            Debug.WriteLine("Merged: Normal object event " + e.objState.ObjectId);
+    });
+LiveClient.ConnectIfNeeded();
+```
+
+### RX Example 6 (Robust): Use Replay to keep last known event and switch queries dynamically
+```csharp
+var replayed = LiveClient.OnObjectEvent.Replay(1);
+replayed.Connect(); // Start replaying
+var subA = LiveClient.Subscribe(ParseClient.Instance.GetQuery("TestChat").WhereEqualTo("Author", "AUser"));
+var subB = LiveClient.Subscribe(ParseClient.Instance.GetQuery("TestChat").WhereEqualTo("Author", "BUser"));
+
+var combined = LiveClient.OnObjectEvent.Where(e => e.subscription == subA || e.subscription == subB);
+combined.Subscribe(e => Debug.WriteLine("Replayed combined event: " + e.objState.ObjectId));
+LiveClient.ConnectIfNeeded();
+```
+
+## 3 Very Robust Examples (Rx + LINQ Combined)
+
+### Rx+LINQ Example 1 (Very Robust): Filter events in-flight with LINQ, buffer and process after a condition
+Scenario: We only want messages with "Critical" keyword and Author != "SystemBot", batch them every 10s.
+```csharp
+var q = ParseClient.Instance.GetQuery("TestChat");
+var s = LiveClient.Subscribe(q);
+
+LiveClient.OnObjectEvent
+    .Where(e => e.subscription == s && e.evt == Subscription.Event.Create)
+    .Select(e => e.objState)
+    .Where(o => o.ContainsKey("Message") && ((string)o["Message"]).Contains("Critical"))
+    .Where(o => (string)o["Author"] != "SystemBot")
+    .Buffer(TimeSpan.FromSeconds(10))
+    .Where(batch => batch.Count > 0)
+    .Subscribe(batch =>
+    {
+        // LINQ over batch
+        var sorted = batch.OrderByDescending(o => (DateTime)o["CreatedAt"]);
+        foreach (var msg in sorted)
+            Debug.WriteLine("Critical Msg: " + msg["Message"]);
+    });
+
+LiveClient.ConnectIfNeeded();
+```
+
+### Rx+LINQ Example 2 (Very Robust): Throttle + GroupBy 
+Scenario: Group updates by Author every 5s and print how many updates each author did.
+```csharp
+var q = ParseClient.Instance.GetQuery("TestChat");
+var s = LiveClient.Subscribe(q);
+
+LiveClient.OnObjectEvent
+    .Where(e => e.subscription == s && e.evt == Subscription.Event.Update)
+    .Select(e => e.objState)
+    .GroupBy(o => (string)o["Author"])
+    .SelectMany(group =>
+        group.Buffer(TimeSpan.FromSeconds(5))
+             .Select(list => new { Author = group.Key, Count = list.Count })
+    )
+    .Subscribe(authorGroup =>
+    {
+        Debug.WriteLine($"{authorGroup.Author} made {authorGroup.Count} updates in the last 5s");
+    });
+
+LiveClient.ConnectIfNeeded();
+```
+
+### Rx+LINQ Example 3 (Very Robust): Merge two queries, distinct by ObjectId, and order results on the fly
+Scenario: We want to combine messages from Authors "X" and "Y", remove duplicates, sort by CreatedAt descending, and only act on the top 10 recent unique messages each 10s.
+```csharp
+var qX = ParseClient.Instance.GetQuery("TestChat").WhereEqualTo("Author", "X");
+var qY = ParseClient.Instance.GetQuery("TestChat").WhereEqualTo("Author", "Y");
+
+var sX = LiveClient.Subscribe(qX);
+var sY = LiveClient.Subscribe(qY);
+
+LiveClient.OnObjectEvent
+    .Where(e => (e.subscription == sX || e.subscription == sY) && 
+                 (e.evt == Subscription.Event.Create || e.evt == Subscription.Event.Update))
+    .Select(e => e.objState)
+    .Buffer(TimeSpan.FromSeconds(10))
+    .Select(batch => batch
+        .GroupBy(o => o.ObjectId)
+        .Select(g => g.First()) // distinct by ObjectId
+        .OrderByDescending(o => (DateTime)o["CreatedAt"])
+        .Take(10))
+    .Subscribe(top10 =>
+    {
+        foreach (var msg in top10)
+            Debug.WriteLine("Top message from X/Y: " + msg["Message"]);
+    });
+
+LiveClient.ConnectIfNeeded();
+```
+
+---
+
+## Implementing a Connection Listener (Optional)
+```csharp
+public class MyLQListener : IParseLiveQueryClientCallbacks
+{
+    public void OnLiveQueryClientConnected(ParseLiveQueryClient client)
+    {
+        Debug.WriteLine("Client Connected");
+    }
+
+    public void OnLiveQueryClientDisconnected(ParseLiveQueryClient client, bool userInitiated)
+    {
+        Debug.WriteLine("Client Disconnected");
+    }
+
+    public void OnLiveQueryError(ParseLiveQueryClient client, LiveQueryException reason)
+    {
+        Debug.WriteLine("LiveQuery Error: " + reason.Message);
+    }
+
+    public void OnSocketError(ParseLiveQueryClient client, Exception reason)
+    {
+        Debug.WriteLine("Socket Error: " + reason.Message);
+    }
+}
+
+// Usage:
+// LiveClient.RegisterListener(new MyLQListener());
+```
+
+## Conclusion
+This v2 version integrates LINQ and Rx.NET, enabling highly flexible and reactive real-time data flows with Parse Live Queries. Advanced filtering, buffering, throttling, and complex transformations are now possible with minimal code.
+
+PRs are welcome!
