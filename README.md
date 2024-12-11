@@ -7,7 +7,7 @@
 - Full LINQ support integrated.  
 - Enhanced stability and MAUI compatibility.
 
-**Big Ups** to:
+**Thanks :)** to:
 - [JonMcPherson](https://github.com/JonMcPherson/parse-live-query-dotnet) for original Parse Live Query dotnet code.  
 - [Parse Community](https://github.com/parse-community) for Parse SDK.  
 - My [Parse-SDK fork](https://github.com/YBTopaz8/Parse-SDK-dotNET) which this depends on.  
@@ -27,8 +27,6 @@ Example in Back4App:
 ```csharp
 using Parse; // Parse
 using Parse.LiveQuery; // ParseLQ
-using System.Net;
-using System.Diagnostics;
 using System.Reactive.Linq; // For Rx
 using System.Linq; // For LINQ
 using System.Collections.ObjectModel;
