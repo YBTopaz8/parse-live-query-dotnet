@@ -22,29 +22,33 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\..\..\Parse-SDK-dotNET\Parse\bin\Release\net5.0\Parse.dll">
-      <Pack>true</Pack>
-      <PackagePath>lib\net5.0\</PackagePath>
-    </Content>
-    <Content Include="..\..\..\Parse-SDK-dotNET\Parse\bin\Release\net6.0\Parse.dll">
-      <Pack>true</Pack>
-      <PackagePath>lib\net6.0\</PackagePath>
-    </Content>
-    <Content Include="..\..\..\Parse-SDK-dotNET\Parse\bin\Release\net7.0\Parse.dll">
-      <Pack>true</Pack>
-      <PackagePath>lib\net7.0\</PackagePath>
-    </Content>
-    <Content Include="..\..\..\Parse-SDK-dotNET\Parse\bin\Release\net8.0\Parse.dll">
-      <Pack>true</Pack>
-      <PackagePath>lib\net8.0\</PackagePath>
-    </Content>
-    <Content Include="..\..\..\Parse-SDK-dotNET\Parse\bin\Release\net9.0\Parse.dll">
-      <Pack>true</Pack>
-      <PackagePath>lib\net9.0\</PackagePath>
-    </Content>
+  
+  <Content Include="..\..\Parse-SDK-dotNETw\Parse\bin\Release\net5.0\Parse.dll">
+    <Pack>true</Pack>
+    <PackagePath>lib\net5.0\</PackagePath>
+  </Content>
+  
+  <Content Include="..\..\Parse-SDK-dotNETw\Parse\bin\Release\net6.0\Parse.dll">
+    <Pack>true</Pack>
+    <PackagePath>lib\net6.0\</PackagePath>
+  </Content>
+  
+  <Content Include="..\..\Parse-SDK-dotNETw\Parse\bin\Release\net7.0\Parse.dll">
+    <Pack>true</Pack>
+    <PackagePath>lib\net7.0\</PackagePath>
+  </Content>
+  
+  <Content Include="..\..\Parse-SDK-dotNETw\Parse\bin\Release\net8.0\Parse.dll">
+    <Pack>true</Pack>
+    <PackagePath>lib\net8.0\</PackagePath>
+  </Content>
+  
+  <Content Include="..\..\Parse-SDK-dotNETw\Parse\bin\Release\net9.0\Parse.dll">
+    <Pack>true</Pack>
+    <PackagePath>lib\net9.0\</PackagePath>
+  </Content>
+    
   </ItemGroup>
-
-
 
   <ItemGroup>
     <None Include="..\LICENSE">
@@ -58,6 +62,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Parse-SDK-dotNET\Parse\Parse.csproj" />
+    <ProjectReference Include="..\..\Parse-SDK-dotNETw\Parse\Parse.csproj" />
   </ItemGroup>
+
+
 </Project>

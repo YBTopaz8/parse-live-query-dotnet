@@ -36,14 +36,14 @@ namespace Parse.LiveQuery
         private readonly Subject<LiveQueryException> _errorSubject = new Subject<LiveQueryException>();                       // ADDED
         private readonly Subject<(int requestId, Subscription subscription)> _subscribedSubject = new Subject<(int, Subscription)>();       // ADDED
         private readonly Subject<(int requestId, Subscription subscription)> _unsubscribedSubject = new Subject<(int, Subscription)>();     // ADDED
-        private readonly Subject<(Subscription.Event evt, IObjectState objState, Subscription subscription)> _objectEventSubject = new Subject<(Subscription.Event, IObjectState, Subscription)>(); // ADDED
+        private readonly Subject<(Subscription.Event evt, object objectDictionnary, Subscription subscription)> _objectEventSubject = new Subject<(Subscription.Event, object, Subscription)>(); // ADDED
 
         public IObservable<ParseLiveQueryClient> OnConnected => _connectedSubject.AsObservable();                          // ADDED
         public IObservable<(ParseLiveQueryClient client, bool userInitiated)> OnDisconnected => _disconnectedSubject.AsObservable(); // ADDED
         public IObservable<LiveQueryException> OnError => _errorSubject.AsObservable();                                    // ADDED
         public IObservable<(int requestId, Subscription subscription)> OnSubscribed => _subscribedSubject.AsObservable();   // ADDED
         public IObservable<(int requestId, Subscription subscription)> OnUnsubscribed => _unsubscribedSubject.AsObservable(); // ADDED
-        public IObservable<(Subscription.Event evt, IObjectState objState, Subscription subscription)> OnObjectEvent => _objectEventSubject.AsObservable(); // ADDED
+        public IObservable<(Subscription.Event evt, object objectDictionnary, Subscription subscription)> OnObjectEvent => _objectEventSubject.AsObservable(); // ADDED
 
 
         public ParseLiveQueryClient() : this(GetDefaultUri()) { }
@@ -383,17 +383,15 @@ namespace Parse.LiveQuery
             {
                 int requestId = Convert.ToInt32(jsonObject["requestId"]);
                 var objectElement = (JsonElement)jsonObject["object"];
+                //var objectElement = (JsonElement)jsonObject["original"]; // TODO: Expose this in the future
                 IDictionary<string, object> objectData = JsonElementToDictionary(objectElement);
 
                 if (_subscriptions.TryGetValue(requestId, out var subscription))
                 {
-                    var objState = (IObjectState)ParseClient.Instance.Decoder.Decode(objectData, ParseClient.Instance.Services);
-                    
-                    
-                    //subscription.DidReceive(subscription.QueryObj, subscriptionEvent, objState);
-
-                    // CHANGED: Instead of callback-based dispatch, use Rx subject for object events
-                    _objectEventSubject.OnNext((subscriptionEvent, objState, subscription)); // ADDED
+                    var obj = ParseClient.Instance.Decoder.Decode(objectData, ParseClient.Instance.Services);
+        
+                    //TODO 
+                    _objectEventSubject.OnNext((subscriptionEvent, obj, subscription)); // ADDED
                 }
 
             }
