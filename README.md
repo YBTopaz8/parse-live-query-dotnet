@@ -1,4 +1,4 @@
-# Parse-Live-Query-Unofficial v2 (with RX and LINQ Support)
+# Parse-Live-Query-Unofficial v2 (with RX and LINQ Support) - soon
 
 **Key Changes from v1:**  
 - Now supports .NET 5, 6, 7, 8, and .NET MAUI.  
