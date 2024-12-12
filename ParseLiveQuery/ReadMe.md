@@ -1,10 +1,11 @@
-### Parse-Live-Query-Unofficial
-- Added Support for (.NET 5,6,7,8,9) .NET 9 and .NET MAUI.
+﻿### Parse-Live-Query-Unofficial
+- Now on V2.0.0 ! 🚀
+- Added Support for .NET 5,6,7,8, 9 and .NET MAUI.
 - Replaced previous web client with `System.Net.WebSockets.Client` as I believe is better.
-- Should be FULLY compatible with .NET 9 and MAUI.
+- Replaced Subscriptions and callbacks with `System.Reactive` for better handling of events.
+- Added a YouTube video for a full walkthrough of the SDK.
+- Added a full ReadMe for the SDK.
 
-
-Here is a full YouTube video walking through what it is, and how to use it.
 
 [https://youtu.be/OlpHIJDvl7E](https://youtu.be/V-cUjq7Js84)
 
