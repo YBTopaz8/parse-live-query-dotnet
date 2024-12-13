@@ -4,11 +4,18 @@
 
 
 **Key Changes from v1:**  
-- Now supports .NET 5, 6, 7, 8, and .NET MAUI.  
-- Uses `System.Net.WebSockets.Client` for better connectivity.  
-- Replaced callbacks (CB) with Reactive Extensions (Rx.NET) for event handling.  
-- Full LINQ support integrated.  
-- Enhanced stability and MAUI compatibility.
+
+- Now on V2.0.1 ! 🚀
+- Added Support for .NET 5,6,7,8, 9 and .NET MAUI.
+- Replaced previous web client with System.Net.WebSockets.Client as I believe is better.
+- Replaced Subscriptions and callbacks with System.Reactive for better handling of events.
+- Added a YouTube video for a full walkthrough of the SDK.
+- Added a full ReadMe for the SDK.
+- It now works as expected (sorry guys 😅)
+  
+Here is the full ReadMe;
+
+Since I Updated this based on my MAUI Projects, I had to update my fork of Parse SDK to have MAUI support, thus
 
 **Thanks :)** to:
 - [JonMcPherson](https://github.com/JonMcPherson/parse-live-query-dotnet) for original Parse Live Query dotnet code.  
