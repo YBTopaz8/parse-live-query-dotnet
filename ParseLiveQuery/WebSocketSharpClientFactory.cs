@@ -19,7 +19,6 @@ public class WebSocketClient : IWebSocketClient
     private CancellationTokenSource _cancellationTokenSource;
 
     private readonly Subject<WebSocketState> _stateChanges = new(); 
-    private WebSocketState _currentState;
 
     private readonly Subject<string> _messages = new();
     private readonly Subject<Exception> _errors = new();
