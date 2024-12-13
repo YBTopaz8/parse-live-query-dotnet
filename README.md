@@ -338,34 +338,6 @@ LiveClient.ConnectIfNeeded();
 
 ---
 
-## Implementing a Connection Listener (Optional)
-```csharp
-public class MyLQListener : IParseLiveQueryClientCallbacks
-{
-    public void OnLiveQueryClientConnected(ParseLiveQueryClient client)
-    {
-        Debug.WriteLine("Client Connected");
-    }
-
-    public void OnLiveQueryClientDisconnected(ParseLiveQueryClient client, bool userInitiated)
-    {
-        Debug.WriteLine("Client Disconnected");
-    }
-
-    public void OnLiveQueryError(ParseLiveQueryClient client, LiveQueryException reason)
-    {
-        Debug.WriteLine("LiveQuery Error: " + reason.Message);
-    }
-
-    public void OnSocketError(ParseLiveQueryClient client, Exception reason)
-    {
-        Debug.WriteLine("Socket Error: " + reason.Message);
-    }
-}
-
-// Usage:
-// LiveClient.RegisterListener(new MyLQListener());
-```
 
 ## Conclusion
 This v2 version integrates LINQ and Rx.NET, enabling highly flexible and reactive real-time data flows with Parse Live Queries. Advanced filtering, buffering, throttling, and complex transformations are now possible with minimal code.
