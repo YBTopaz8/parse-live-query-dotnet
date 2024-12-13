@@ -1,5 +1,8 @@
 # Parse-Live-Query-Unofficial v2 (with RX and LINQ Support)
 
+[![Nuget](https://img.shields.io/nuget/v/yb.parselivequerydotnet.svg)](https://www.nuget.org/packages/YB.ParseLiveQueryDotNet)
+
+
 **Key Changes from v1:**  
 - Now supports .NET 5, 6, 7, 8, and .NET MAUI.  
 - Uses `System.Net.WebSockets.Client` for better connectivity.  
