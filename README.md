@@ -5,13 +5,15 @@
 
 **Key Changes from v1:**  
 
-- Now on V2.0.1 ! 🚀
+- Now on V2.0.3 ! 🚀
 - Added Support for .NET 5,6,7,8, 9 and .NET MAUI.
 - Replaced previous web client with System.Net.WebSockets.Client as I believe is better.
 - Replaced Subscriptions and callbacks with System.Reactive for better handling of events.
 - Added a YouTube video for a full walkthrough of the SDK.
 - Added a full ReadMe for the SDK.
 - It now works as expected (sorry guys 😅)
+
+## You May want to read the [Full WIKI Here](https://github.com/YBTopaz8/parse-live-query-dotnet/wiki) (it has tones of examples)
   
 Here is the full ReadMe;
 
@@ -19,8 +21,8 @@ Since I Updated this based on my MAUI Projects, I had to update my fork of Parse
 
 **Thanks :)** to:
 - [JonMcPherson](https://github.com/JonMcPherson/parse-live-query-dotnet) for original Parse Live Query dotnet code.  
-- [Parse Community](https://github.com/parse-community) for Parse SDK.  
-- My [Parse-SDK fork](https://github.com/YBTopaz8/Parse-SDK-dotNET) which this depends on.  
+- [Parse Community](https://github.com/parse-community) for Parse SDK.
+- My [Parse-SDK fork](https://github.com/YBTopaz8/Parse-SDK-dotNET) which this depends on.
 
 ## What is Live Query?
 Live Query provides real-time data sync between server and clients over WebSockets. When data changes on the server, subscribed clients are instantly notified.
