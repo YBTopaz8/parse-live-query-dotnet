@@ -417,7 +417,7 @@ public class CacheController : IDiskFileCacheController
 
         public static IDisposable Create(SemaphoreSlim semaphore)
         {
-            semaphore.Wait();
+            _ = semaphore;
             return new Releaser(semaphore);
         }
 

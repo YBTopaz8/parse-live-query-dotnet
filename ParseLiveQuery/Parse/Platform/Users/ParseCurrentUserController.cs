@@ -34,7 +34,7 @@ public class ParseCurrentUserController : IParseCurrentUserController
         Decoder = decoder ?? throw new ArgumentNullException(nameof(decoder));
     }
 
-    public ParseUser? CurrentUser
+    public ParseUser CurrentUser
     {
         get => currentUser;
         private set => currentUser = value; // Setter is private to ensure controlled modification
@@ -47,9 +47,9 @@ public class ParseCurrentUserController : IParseCurrentUserController
             .Select(s => s[random.Next(s.Length)]).ToArray());
     }
 
-    public async Task SetAsync(ParseUser? user, CancellationToken cancellationToken)
+    public async Task<ParseUser> SetAsync(ParseUser user, CancellationToken cancellationToken)
     {
-        await TaskQueue.Enqueue<Task<bool>>(async _ =>
+        var usr = await TaskQueue.Enqueue<Task<ParseUser>>(async _ =>
         {
             if (user == null)
             {
@@ -77,9 +77,10 @@ public class ParseCurrentUserController : IParseCurrentUserController
                 await storage.AddAsync(nameof(CurrentUser), JsonUtilities.Encode(data)).ConfigureAwait(false);
             }
 
-            CurrentUser = user;
-            return true; // Enforce return type as `Task<bool>`
+            return CurrentUser; // Enforce return type as `Task<ParseUser>`
         }, cancellationToken).ConfigureAwait(false);
+
+        return usr;
     }
 
 
@@ -131,7 +132,7 @@ public class ParseCurrentUserController : IParseCurrentUserController
         }, CancellationToken.None).ConfigureAwait(false);
     }
 
-    public async Task<string?> GetCurrentSessionTokenAsync(IServiceHub serviceHub, CancellationToken cancellationToken = default)
+    public async Task<string> GetCurrentSessionTokenAsync(IServiceHub serviceHub, CancellationToken cancellationToken = default)
     {
         var user = await GetAsync(serviceHub, cancellationToken).ConfigureAwait(false);
         return user?.SessionToken;
@@ -145,4 +146,5 @@ public class ParseCurrentUserController : IParseCurrentUserController
             await ClearFromDiskAsync();
         }, cancellationToken).ConfigureAwait(false);
     }
+
 }
