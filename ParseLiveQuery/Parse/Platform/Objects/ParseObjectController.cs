@@ -99,7 +99,7 @@ public class ParseObjectController : IParseObjectController
 
     internal IList<Task<IDictionary<string, object>>> ExecuteBatchRequests(IList<ParseCommand> requests, string sessionToken, CancellationToken cancellationToken = default)
     {
-        List<Task<IDictionary<string, object>>> tasks = new List<Task<IDictionary<string, object>>>();
+        List<Task<IDictionary<string, object>>> tasks = new();
         int batchSize = requests.Count;
 
         IEnumerable<ParseCommand> remaining = requests;
@@ -121,12 +121,14 @@ public class ParseObjectController : IParseObjectController
     {
         int batchSize = requests.Count;
 
-        List<Task<IDictionary<string, object>>> tasks = new List<Task<IDictionary<string, object>>> { };
-        List<TaskCompletionSource<IDictionary<string, object>>> completionSources = new List<TaskCompletionSource<IDictionary<string, object>>> { };
+        List<Task<IDictionary<string, object>>> tasks = new()
+        { };
+        List<TaskCompletionSource<IDictionary<string, object>>> completionSources = new()
+        { };
 
         for (int i = 0; i < batchSize; ++i)
         {
-            TaskCompletionSource<IDictionary<string, object>> tcs = new TaskCompletionSource<IDictionary<string, object>>();
+            TaskCompletionSource<IDictionary<string, object>> tcs = new();
 
             completionSources.Add(tcs);
             tasks.Add(tcs.Task);
@@ -134,7 +136,7 @@ public class ParseObjectController : IParseObjectController
 
         List<object> encodedRequests = requests.Select(request =>
         {
-            Dictionary<string, object> results = new Dictionary<string, object>
+            Dictionary<string, object> results = new()
             {
                 ["method"] = request.Method,
                 ["path"] = request is { Path: { }, Resource: { } } ? request.Target.AbsolutePath : new Uri(new Uri(ServerConnectionData.ServerURI), request.Path).AbsolutePath,
@@ -146,7 +148,7 @@ public class ParseObjectController : IParseObjectController
             return results;
         }).Cast<object>().ToList();
 
-        ParseCommand command = new ParseCommand("batch", method: "POST", sessionToken: sessionToken, data: new Dictionary<string, object> { [nameof(requests)] = encodedRequests });
+        ParseCommand command = new("batch", method: "POST", sessionToken: sessionToken, data: new Dictionary<string, object> { [nameof(requests)] = encodedRequests });
 
         CommandRunner.RunCommandAsync(command, cancellationToken: cancellationToken).ContinueWith(task =>
         {

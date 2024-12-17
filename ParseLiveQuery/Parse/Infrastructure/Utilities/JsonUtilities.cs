@@ -30,10 +30,10 @@ public class JsonUtilities
     private static readonly char[] falseValue = "false".ToCharArray();
     private static readonly char[] trueValue = "true".ToCharArray();
     private static readonly char[] nullValue = "null".ToCharArray();
-    private static readonly Regex numberValue = new Regex(startOfString + @"-?(?:0|[1-9]\d*)(?<frac>\.\d+)?(?<exp>(?:e|E)(?:-|\+)?\d+)?");
-    private static readonly Regex stringValue = new Regex(startOfString + "\"(?<content>(?:[^\\\\\"]|(?<escape>\\\\(?:[\\\\\"/bfnrt]|u[0-9a-fA-F]{4})))*)\"", RegexOptions.Multiline);
+    private static readonly Regex numberValue = new(startOfString + @"-?(?:0|[1-9]\d*)(?<frac>\.\d+)?(?<exp>(?:e|E)(?:-|\+)?\d+)?");
+    private static readonly Regex stringValue = new(startOfString + "\"(?<content>(?:[^\\\\\"]|(?<escape>\\\\(?:[\\\\\"/bfnrt]|u[0-9a-fA-F]{4})))*)\"", RegexOptions.Multiline);
 
-    private static readonly Regex escapePattern = new Regex("\\\\|\"|[\u0000-\u001F]");
+    private static readonly Regex escapePattern = new("\\\\|\"|[\u0000-\u001F]");
 
     private class JsonStringParser
     {
@@ -63,7 +63,8 @@ public class JsonUtilities
             if (!Accept(startObject))
                 return false;
 
-            Dictionary<string, object> dict = new Dictionary<string, object> { };
+            Dictionary<string, object> dict = new()
+            { };
             while (true)
             {
                 if (!ParseMember(out object pairValue))
@@ -104,7 +105,7 @@ public class JsonUtilities
             output = null;
             if (!Accept(startArray))
                 return false;
-            List<object> list = new List<object>();
+            List<object> list = new();
             while (true)
             {
                 if (!ParseValue(out object value))
@@ -157,7 +158,7 @@ public class JsonUtilities
             // handle escapes:
             int offset = 0;
             Group contentCapture = m.Groups["content"];
-            StringBuilder builder = new StringBuilder(contentCapture.Value);
+            StringBuilder builder = new(contentCapture.Value);
             foreach (Capture escape in m.Groups["escape"].Captures)
             {
                 int index = escape.Index - contentCapture.Index - offset;
@@ -342,7 +343,7 @@ public class JsonUtilities
 
         try
         {
-            JsonStringParser parser = new JsonStringParser(input);
+            JsonStringParser parser = new(input);
 
             if ((parser.ParseObject(out object output) || parser.ParseArray(out output)) &&
                 parser.CurrentIndex == input.Length)
@@ -409,7 +410,7 @@ public class JsonUtilities
             throw new ArgumentNullException();
         if (dict.Count == 0)
             return "{}";
-        StringBuilder builder = new StringBuilder("{");
+        StringBuilder builder = new("{");
         foreach (KeyValuePair<string, object> pair in dict)
         {
             builder.Append(Encode(pair.Key));
@@ -432,7 +433,7 @@ public class JsonUtilities
             throw new ArgumentNullException();
         if (list.Count == 0)
             return "[]";
-        StringBuilder builder = new StringBuilder("[");
+        StringBuilder builder = new("[");
         foreach (object item in list)
         {
             builder.Append(Encode(item));

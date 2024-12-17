@@ -53,7 +53,7 @@ public class MutablePushState : IPushState
 
     public override int GetHashCode()
     {
-        HashCode hash = new HashCode();
+        HashCode hash = new();
 
         // Add primitive and simple values
         hash.Add(Query);

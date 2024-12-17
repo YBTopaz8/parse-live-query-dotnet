@@ -421,7 +421,7 @@ public static class ParseQueryExtensions
                 throw new InvalidOperationException("The left-hand side of a supported function call must be a ParseObject field access.");
             }
 
-            return translatedMethod.DeclaringType.GetGenericTypeDefinition().MakeGenericType(typeof(T)).GetRuntimeMethod(translatedMethod.Name, translatedMethod.GetParameters().Select(parameter => parameter.ParameterType).ToArray()).Invoke(source, new[] { GetValue(objTransformed.Arguments[0]), GetValue(node.Arguments[0]) }) as ParseQuery<T>;
+            return translatedMethod.DeclaringType.GetGenericTypeDefinition().MakeGenericType(typeof(T)).GetRuntimeMethod(translatedMethod.Name, translatedMethod.GetParameters().Select(parameter => parameter.ParameterType).ToArray()).Invoke(source, [GetValue(objTransformed.Arguments[0]), GetValue(node.Arguments[0])]) as ParseQuery<T>;
         }
 
         if (node.Arguments[0] == expression.Parameters[0])

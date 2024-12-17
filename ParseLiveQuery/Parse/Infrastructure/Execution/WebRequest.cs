@@ -9,7 +9,7 @@ namespace Parse.Infrastructure.Execution;
 /// </summary>
 public class WebRequest
 {
-    public Uri Target => new Uri(new Uri(Resource), Path);
+    public Uri Target => new(new Uri(Resource), Path);
 
     public string Resource { get; set; }
 

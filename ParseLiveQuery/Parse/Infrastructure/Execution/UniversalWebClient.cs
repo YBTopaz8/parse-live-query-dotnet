@@ -53,7 +53,7 @@ CancellationToken cancellationToken)
         Stream data = httpRequest.Data;
         if (data != null || httpRequest.Method.Equals("POST", StringComparison.OrdinalIgnoreCase))
         {
-            message.Content = new StreamContent(data ?? new MemoryStream(new byte[0]));
+            message.Content = new StreamContent(data ?? new MemoryStream([]));
         }
 
 

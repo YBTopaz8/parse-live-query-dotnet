@@ -112,7 +112,7 @@ public static class Conversion
 
     static Type GetInterfaceType(Type objType, Type genericInterfaceType)
     {
-        Tuple<Type, Type> cacheKey = new Tuple<Type, Type>(objType, genericInterfaceType);
+        Tuple<Type, Type> cacheKey = new(objType, genericInterfaceType);
 
         if (InterfaceLookupCache.ContainsKey(cacheKey))
             return InterfaceLookupCache[cacheKey];

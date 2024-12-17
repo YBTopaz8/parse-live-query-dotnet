@@ -25,7 +25,7 @@ public class ParseCurrentUserController : IParseCurrentUserController
     private readonly IParseDataDecoder Decoder;
 
     private readonly TaskQueue TaskQueue = new();
-    private ParseUser? currentUser; // Nullable to explicitly handle absence of a user
+    private ParseUser currentUser; // Nullable to explicitly handle absence of a user
 
     public ParseCurrentUserController(ICacheController storageController, IParseObjectClassController classController, IParseDataDecoder decoder)
     {
@@ -84,13 +84,13 @@ public class ParseCurrentUserController : IParseCurrentUserController
     }
 
 
-    public async Task<ParseUser?> GetAsync(IServiceHub serviceHub, CancellationToken cancellationToken = default)
+    public async Task<ParseUser> GetAsync(IServiceHub serviceHub, CancellationToken cancellationToken = default)
     {
         
         if (CurrentUser is { ObjectId: { } })
             return CurrentUser;
 
-        return await TaskQueue.Enqueue<Task<ParseUser?>>(async _ =>
+        return await TaskQueue.Enqueue<Task<ParseUser>>(async _ =>
         {
             var storage = await StorageController.LoadAsync().ConfigureAwait(false);
             if (storage.TryGetValue(nameof(CurrentUser), out var serializedData) && serializedData is string serialization)

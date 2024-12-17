@@ -24,19 +24,19 @@ namespace Parse.LiveQuery
         private readonly ISubscriptionFactory _subscriptionFactory;
         private readonly ITaskQueue _taskQueue;
 
-        private readonly ConcurrentDictionary<int, Subscription> _subscriptions = new ConcurrentDictionary<int, Subscription>();
+        private readonly ConcurrentDictionary<int, Subscription> _subscriptions = new();
 
         private IWebSocketClient _webSocketClient;
         private int _requestIdCount = 1;
         private bool _userInitiatedDisconnect;
         private bool _hasReceivedConnected;
 
-        private readonly Subject<ParseLiveQueryClient> _connectedSubject = new Subject<ParseLiveQueryClient>();               // ADDED
-        private readonly Subject<(ParseLiveQueryClient client, bool userInitiated)> _disconnectedSubject = new Subject<(ParseLiveQueryClient, bool)>(); // ADDED
-        private readonly Subject<LiveQueryException> _errorSubject = new Subject<LiveQueryException>();                       // ADDED
-        private readonly Subject<(int requestId, Subscription subscription)> _subscribedSubject = new Subject<(int, Subscription)>();       // ADDED
-        private readonly Subject<(int requestId, Subscription subscription)> _unsubscribedSubject = new Subject<(int, Subscription)>();     // ADDED
-        private readonly Subject<(Subscription.Event evt, object objectDictionnary, Subscription subscription)> _objectEventSubject = new Subject<(Subscription.Event, object, Subscription)>(); // ADDED
+        private readonly Subject<ParseLiveQueryClient> _connectedSubject = new();               // ADDED
+        private readonly Subject<(ParseLiveQueryClient client, bool userInitiated)> _disconnectedSubject = new(); // ADDED
+        private readonly Subject<LiveQueryException> _errorSubject = new();                       // ADDED
+        private readonly Subject<(int requestId, Subscription subscription)> _subscribedSubject = new();       // ADDED
+        private readonly Subject<(int requestId, Subscription subscription)> _unsubscribedSubject = new();     // ADDED
+        private readonly Subject<(Subscription.Event evt, object objectDictionnary, Subscription subscription)> _objectEventSubject = new(); // ADDED
 
         public IObservable<ParseLiveQueryClient> OnConnected => _connectedSubject.AsObservable();                          // ADDED
         public IObservable<(ParseLiveQueryClient client, bool userInitiated)> OnDisconnected => _disconnectedSubject.AsObservable(); // ADDED
@@ -72,7 +72,7 @@ namespace Parse.LiveQuery
             if (server == null)
                 throw new InvalidOperationException("Missing default Server URI in CurrentConfiguration");
 
-            Uri serverUri = new Uri(server);
+            Uri serverUri = new (server);
             return new UriBuilder(serverUri)
             {
                 Scheme = serverUri.Scheme.Equals("https") ? "wss" : "ws"

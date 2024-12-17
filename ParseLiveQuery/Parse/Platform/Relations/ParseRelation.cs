@@ -22,7 +22,7 @@ public static class RelationServiceExtensions
     internal static ParseRelationBase CreateRelation(this IParseObjectClassController classController, ParseObject parent, string key, string targetClassName)
     {
         Expression<Func<ParseRelation<ParseObject>>> createRelationExpr = () => CreateRelation<ParseObject>(parent, key, targetClassName);
-        return (createRelationExpr.Body as MethodCallExpression).Method.GetGenericMethodDefinition().MakeGenericMethod(classController.GetType(targetClassName) ?? typeof(ParseObject)).Invoke(default, new object[] { parent, key, targetClassName }) as ParseRelationBase;
+        return (createRelationExpr.Body as MethodCallExpression).Method.GetGenericMethodDefinition().MakeGenericMethod(classController.GetType(targetClassName) ?? typeof(ParseObject)).Invoke(default, [parent, key, targetClassName]) as ParseRelationBase;
     }
 
     static ParseRelation<T> CreateRelation<T>(ParseObject parent, string key, string targetClassName) where T : ParseObject
@@ -56,7 +56,7 @@ public abstract class ParseRelationBase : IJsonConvertible
 
     internal void Add(ParseObject entity)
     {
-        ParseRelationOperation change = new ParseRelationOperation(Parent.Services.ClassController, new[] { entity }, default);
+        ParseRelationOperation change = new(Parent.Services.ClassController, [entity], default);
 
         Parent.PerformOperation(Key, change);
         TargetClassName = change.TargetClassName;
@@ -64,7 +64,7 @@ public abstract class ParseRelationBase : IJsonConvertible
 
     internal void Remove(ParseObject entity)
     {
-        ParseRelationOperation change = new ParseRelationOperation(Parent.Services.ClassController, default, new[] { entity });
+        ParseRelationOperation change = new(Parent.Services.ClassController, default, [entity]);
 
         Parent.PerformOperation(Key, change);
         TargetClassName = change.TargetClassName;

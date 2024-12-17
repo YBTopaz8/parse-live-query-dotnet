@@ -30,7 +30,7 @@ public class ParseUser : ParseObject
         }
         catch (Exception ex)
         {
-            
+            Console.WriteLine($"IsAuthenticatedAsync failed: {ex.Message}");
             return false;
         }
     }

@@ -107,10 +107,10 @@ public class ParseACL : IJsonConvertible
 
     public IDictionary<string, object> ConvertToJSON(IServiceHub serviceHub = default)
     {
-        Dictionary<string, object> result = new Dictionary<string, object>();
+        Dictionary<string, object> result = new();
         foreach (string user in readers.Union(writers))
         {
-            Dictionary<string, object> userPermissions = new Dictionary<string, object>();
+            Dictionary<string, object> userPermissions = new();
             if (readers.Contains(user))
             {
                 userPermissions["read"] = true;

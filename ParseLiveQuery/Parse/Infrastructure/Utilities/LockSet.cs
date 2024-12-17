@@ -8,7 +8,7 @@ namespace Parse.Infrastructure.Utilities;
 
 public class LockSet
 {
-    private static readonly ConditionalWeakTable<object, IComparable> stableIds = new ConditionalWeakTable<object, IComparable>();
+    private static readonly ConditionalWeakTable<object, IComparable> stableIds = new();
     private static long nextStableId = 0;
 
     private readonly IEnumerable<object> mutexes;

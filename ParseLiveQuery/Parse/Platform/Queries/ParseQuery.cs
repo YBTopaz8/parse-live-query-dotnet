@@ -103,7 +103,7 @@ public class ParseQuery<T> where T : ParseObject
 
         if (thenBy is { })
         {
-            List<string> newOrderBy = new List<string>(Orderings ?? throw new ArgumentException("You must call OrderBy before calling ThenBy."));
+            List<string> newOrderBy = new(Orderings ?? throw new ArgumentException("You must call OrderBy before calling ThenBy."));
 
             newOrderBy.AddRange(thenBy);
             Orderings = new ReadOnlyCollection<string>(newOrderBy);
@@ -139,7 +139,7 @@ public class ParseQuery<T> where T : ParseObject
             return new HashSet<string>(includes);
         }
 
-        HashSet<string> newIncludes = new HashSet<string>(Includes);
+        HashSet<string> newIncludes = new(Includes);
 
         foreach (string item in includes)
         {
@@ -161,7 +161,7 @@ public class ParseQuery<T> where T : ParseObject
             return where;
         }
 
-        Dictionary<string, object> newWhere = new Dictionary<string, object>(Filters);
+        Dictionary<string, object> newWhere = new(Filters);
         foreach (KeyValuePair<string, object> pair in where)
         {
             if (newWhere.ContainsKey(pair.Key))
@@ -171,7 +171,7 @@ public class ParseQuery<T> where T : ParseObject
                     throw new ArgumentException("More than one where clause for the given key provided.");
                 }
 
-                Dictionary<string, object> newCondition = new Dictionary<string, object>(oldCondition);
+                Dictionary<string, object> newCondition = new(oldCondition);
                 foreach (KeyValuePair<string, object> conditionPair in condition)
                 {
                     if (newCondition.ContainsKey(conditionPair.Key))
@@ -834,7 +834,7 @@ public class ParseQuery<T> where T : ParseObject
 
     internal IDictionary<string, object> BuildParameters(bool includeClassName = false)
     {
-        Dictionary<string, object> result = new Dictionary<string, object>();
+        Dictionary<string, object> result = new();
         if (Filters != null)
             result["where"] = PointerOrLocalIdEncoder.Instance.Encode(Filters, Services);
         if (Orderings != null)
@@ -872,7 +872,8 @@ public class ParseQuery<T> where T : ParseObject
     IDictionary<string, object> EncodeRegex(Regex regex, string modifiers)
     {
         string options = GetRegexOptions(regex, modifiers);
-        Dictionary<string, object> dict = new Dictionary<string, object> { ["$regex"] = regex.ToString() };
+        Dictionary<string, object> dict = new()
+        { ["$regex"] = regex.ToString() };
 
         if (!String.IsNullOrEmpty(options))
         {

@@ -129,7 +129,7 @@ public class ParseObject : IEnumerable<KeyValuePair<string, object>>, INotifyPro
         catch (Exception ex)
         {
 
-            throw new Exception("Error when Creating parse Object..");
+            throw new Exception("Error when Creating parse Object.."+ex.Message);
         }
     }
 
@@ -443,7 +443,7 @@ public class ParseObject : IEnumerable<KeyValuePair<string, object>>, INotifyPro
     /// <param name="value">The object to add.</param>
     public void AddToList(string key, object value)
     {
-        AddRangeToList(key, new[] { value });
+        AddRangeToList(key, [value]);
     }
 
     /// <summary>
@@ -455,7 +455,7 @@ public class ParseObject : IEnumerable<KeyValuePair<string, object>>, INotifyPro
     /// <param name="value">The object to add.</param>
     public void AddUniqueToList(string key, object value)
     {
-        AddRangeUniqueToList(key, new object[] { value });
+        AddRangeUniqueToList(key, [value]);
     }
 
     /// <summary>
@@ -968,7 +968,7 @@ public class ParseObject : IEnumerable<KeyValuePair<string, object>>, INotifyPro
                 OnPropertyChanged(nameof(IsDirty));
             }
 
-            OnFieldsChanged(new[] { key });
+            OnFieldsChanged([key]);
         }
     }
 

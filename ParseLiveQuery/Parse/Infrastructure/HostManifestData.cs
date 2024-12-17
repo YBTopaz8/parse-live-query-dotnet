@@ -20,7 +20,7 @@ public class HostManifestData : IHostManifestData
     /// An instance of <see cref="HostManifestData"/> with inferred values based on the entry assembly.
     /// </summary>
     /// <remarks>Should not be used with Unity.</remarks>
-    public static HostManifestData Inferred => new HostManifestData
+    public static HostManifestData Inferred => new()
     {
         Version = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
           ?? "1.0.0", // Default version if not available

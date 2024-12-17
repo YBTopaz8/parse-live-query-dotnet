@@ -139,7 +139,7 @@ public class ParseCommandRunner : IParseCommandRunner
 
     async Task<ParseCommand> PrepareCommand(ParseCommand command)
     {
-        ParseCommand newCommand = new ParseCommand(command)
+        ParseCommand newCommand = new(command)
         {
             Resource = ServerConnectionData.ServerURI
         };

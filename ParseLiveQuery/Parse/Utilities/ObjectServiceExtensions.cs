@@ -364,7 +364,7 @@ public static class ObjectServiceExtensions
 
     internal static IDictionary<string, object> GenerateJSONObjectForSaving(this IServiceHub serviceHub, IDictionary<string, IParseFieldOperation> operations)
     {
-        Dictionary<string, object> result = new Dictionary<string, object>();
+        Dictionary<string, object> result = new();
 
         foreach (KeyValuePair<string, IParseFieldOperation> pair in operations)
         {
@@ -546,7 +546,7 @@ public static class ObjectServiceExtensions
     {
         // The task that will be complete when all of the child queues indicate they're ready to start.
 
-        TaskCompletionSource<object> readyToStart = new TaskCompletionSource<object>();
+        TaskCompletionSource<object> readyToStart = new();
 
         // First, we need to lock the mutex for the queue for every object. We have to hold this
         // from at least when taskStart() is called to when obj.taskQueue enqueue is called, so
@@ -554,7 +554,7 @@ public static class ObjectServiceExtensions
         // The locks have to be sorted so that we always acquire them in the same order.
         // Otherwise, there's some risk of deadlock.
 
-        LockSet lockSet = new LockSet(objects.Select(o => o.TaskQueue.Mutex));
+        LockSet lockSet = new(objects.Select(o => o.TaskQueue.Mutex));
 
         lockSet.Enter();
         try
@@ -566,7 +566,7 @@ public static class ObjectServiceExtensions
 
             // Add fullTask to each of the objects' queues.
 
-            List<Task> childTasks = new List<Task>();
+            List<Task> childTasks = new();
             foreach (ParseObject obj in objects)
             {
                 obj.TaskQueue.Enqueue((Task task) =>

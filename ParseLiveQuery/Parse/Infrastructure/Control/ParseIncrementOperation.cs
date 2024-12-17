@@ -88,7 +88,7 @@ public class ParseIncrementOperation : IParseFieldOperation
                 continue;
             }
 
-            Tuple<Type, Type> reversePair = new Tuple<Type, Type>(pair.Item2, pair.Item1);
+            Tuple<Type, Type> reversePair = new(pair.Item2, pair.Item1);
             Func<object, object, object> func = Adders[pair];
             Adders[reversePair] = (left, right) => func(right, left);
         }

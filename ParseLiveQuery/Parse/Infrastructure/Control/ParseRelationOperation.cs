@@ -28,8 +28,8 @@ public class ParseRelationOperation : IParseFieldOperation
 
     public ParseRelationOperation(IParseObjectClassController classController, IEnumerable<ParseObject> adds, IEnumerable<ParseObject> removes) : this(classController)
     {
-        adds ??= new ParseObject[0];
-        removes ??= new ParseObject[0];
+        adds ??= [];
+        removes ??= [];
 
         TargetClassName = adds.Concat(removes).Select(entity => entity.ClassName).FirstOrDefault();
         Additions = new ReadOnlyCollection<string>(GetIdsFromObjects(adds).ToList());

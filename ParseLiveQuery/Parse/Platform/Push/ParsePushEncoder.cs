@@ -33,7 +33,7 @@ public class ParsePushEncoder
         if (state.Channels != null)
             query = query.WhereContainedIn("channels", state.Channels);
 
-        Dictionary<string, object> payload = new Dictionary<string, object>
+        Dictionary<string, object> payload = new()
         {
             [nameof(data)] = data,
             ["where"] = query.BuildParameters().GetOrDefault("where", new Dictionary<string, object> { }),

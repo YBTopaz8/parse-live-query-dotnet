@@ -46,7 +46,7 @@ internal class ParseObjectClass
             // Two-parameter constructor
             string className = Constructor.DeclaringType?.Name ?? "_User"; //Still Unsure about this default value, maybe User is not the best choice, but what else?
             var serviceHub = Parse.ParseClient.Instance.Services;
-            return Constructor.Invoke(new object[] { className, serviceHub }) as ParseObject;
+            return Constructor.Invoke([className, serviceHub]) as ParseObject;
         }
         
 

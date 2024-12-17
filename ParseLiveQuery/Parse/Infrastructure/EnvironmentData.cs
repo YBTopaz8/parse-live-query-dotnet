@@ -12,7 +12,7 @@ public class EnvironmentData : IEnvironmentData
     /// <summary>
     /// A <see cref="EnvironmentData"/> instance that the Parse SDK will attempt to generate from environment metadata it should be able to access.
     /// </summary>
-    public static EnvironmentData Inferred => new EnvironmentData
+    public static EnvironmentData Inferred => new()
     {
         TimeZone = TimeZoneInfo.Local.StandardName,
         OSVersion = RuntimeInformation.OSDescription ?? Environment.OSVersion.ToString(),

@@ -16,7 +16,7 @@ public class ParseDataDecoder : IParseDataDecoder
 
     public ParseDataDecoder(IParseObjectClassController classController) => ClassController = classController;
 
-    static string[] Types { get; } = { "Date", "Bytes", "Pointer", "File", "GeoPoint", "Object", "Relation" };
+    static string[] Types { get; } = ["Date", "Bytes", "Pointer", "File", "GeoPoint", "Object", "Relation"];
 
     public object Decode(object data, IServiceHub serviceHub)
     {
