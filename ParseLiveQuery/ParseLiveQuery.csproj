@@ -13,17 +13,25 @@
     <PackageTags>Parse, LiveQuery, .NET, MAUI, CROSS-PLATFORM, LINQ, ReactiveX</PackageTags>
     <RepositoryUrl>https://github.com/YBTopaz8/parse-live-query-dotnet</RepositoryUrl>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageReadmFile>ReadMe.md</PackageReadmFile>
+    <PackageProjectUrl>https://github.com/YBTopaz8/parse-live-query-dotnet</PackageProjectUrl>
+    <PackageReadmFile>Readme.md</PackageReadmFile>
+    
+  </PropertyGroup>
+  <PropertyGroup>
+    <PackageReleaseNotes>See detailed release notes in ReleaseNotes.md</PackageReleaseNotes>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Include="ReleaseNotes.md" Pack="true" PackagePath="ReleaseNotes.md" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
     <PackageReference Include="System.Reactive" Version="6.0.1" />
   </ItemGroup>
 
-  <ItemGroup>
-  
-  </ItemGroup>
+  <PropertyGroup>
+    <Copyright>MIT License - (c) 2024 Yvan Brunel</Copyright>
+  </PropertyGroup>
 
   <ItemGroup>
     <None Include="..\LICENSE">
@@ -33,7 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="ReadMe.md" Pack="true" PackagePath="/" />
+    <None Include="docs\README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 
