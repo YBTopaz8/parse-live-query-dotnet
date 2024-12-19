@@ -28,7 +28,7 @@ public class ParseCommand : WebRequest
         set => base.Data = value;
     }
 
-    public ParseCommand(string relativeUri, string method, string sessionToken = null, IList<KeyValuePair<string, string>> headers = null, IDictionary<string, object> data = null) : this(
+    public ParseCommand(string relativeUri, string method, string sessionToken = null, IList<KeyValuePair<string, string>> headers = null, IDictionary<string, object> data = null) :  this(
         relativeUri: relativeUri, method: method, sessionToken: sessionToken, headers: headers, stream: null, contentType: data != null ? "application/json" : null)
     {
         DataObject = data;
@@ -41,12 +41,12 @@ public class ParseCommand : WebRequest
         Data = stream;
         Headers = new List<KeyValuePair<string, string>>(headers ?? Enumerable.Empty<KeyValuePair<string, string>>());
 
-        if (!String.IsNullOrEmpty(sessionToken))
+        if (!string.IsNullOrEmpty(sessionToken))
         {
             Headers.Add(new KeyValuePair<string, string>("X-Parse-Session-Token", sessionToken));
         }
 
-        if (!String.IsNullOrEmpty(contentType))
+        if (!string.IsNullOrEmpty(contentType))
         {
             Headers.Add(new KeyValuePair<string, string>("Content-Type", contentType));
         }

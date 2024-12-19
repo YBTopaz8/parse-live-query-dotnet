@@ -55,6 +55,7 @@ public class ParseCurrentUserController : IParseCurrentUserController
             {
                 var storage = await StorageController.LoadAsync().ConfigureAwait(false);
                 await storage.RemoveAsync(nameof(CurrentUser)).ConfigureAwait(false);
+                CurrentUser=null;
             }
             else
             {
@@ -66,12 +67,18 @@ public class ParseCurrentUserController : IParseCurrentUserController
 
                 // Additional properties can be added to the dictionary as needed
 
-
+                CurrentUser = user;
                 if (user.CreatedAt != null)
                     data["createdAt"] = user.CreatedAt.Value.ToString(ParseClient.DateFormatStrings.First(), CultureInfo.InvariantCulture);
 
                 if (user.UpdatedAt != null)
                     data["updatedAt"] = user.UpdatedAt.Value.ToString(ParseClient.DateFormatStrings.First(), CultureInfo.InvariantCulture);
+
+                if (user.Username != null)
+                    data["Username"] = user.Username;
+                if (user.SessionToken != null)
+                    data["sessionToken"] = user.SessionToken;
+
 
                 var storage = await StorageController.LoadAsync().ConfigureAwait(false);
                 await storage.AddAsync(nameof(CurrentUser), JsonUtilities.Encode(data)).ConfigureAwait(false);

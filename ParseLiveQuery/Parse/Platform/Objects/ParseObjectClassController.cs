@@ -94,7 +94,7 @@ internal class ParseObjectClassController : IParseObjectClassController
         Mutex.EnterReadLock();
         RegisterActions.TryGetValue(className, out Action toPerform);
         Mutex.ExitReadLock();
-
+        
         toPerform?.Invoke();
     }
 
