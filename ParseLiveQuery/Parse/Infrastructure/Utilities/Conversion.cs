@@ -40,7 +40,7 @@ public static class Conversion
     /// </summary>
     public static T To<T>(object value)
     {
-        return (T) ConvertTo<T>(value);
+        return (T)ConvertTo<T>(value);
     }
     internal static object ConvertTo<T>(object value)
     {
@@ -82,13 +82,13 @@ public static class Conversion
                 if (typeof(T) == typeof(char) && stringValue.Length == 1)
                     return stringValue[0]; // Returns the first character if the string length is 1
             }
-         
-                return (T) Convert.ChangeType(value, typeof(T), System.Globalization.CultureInfo.InvariantCulture);
+
+            return (T)Convert.ChangeType(value, typeof(T), System.Globalization.CultureInfo.InvariantCulture);
         }
         if (typeof(T).IsConstructedGenericType)
         {
             if (typeof(T).CheckWrappedWithNullable() && typeof(T).GenericTypeArguments[0] is { IsPrimitive: true } innerType)
-                return (T) Convert.ChangeType(value, innerType, System.Globalization.CultureInfo.InvariantCulture);
+                return (T)Convert.ChangeType(value, innerType, System.Globalization.CultureInfo.InvariantCulture);
 
             if (GetInterfaceType(value.GetType(), typeof(IList<>)) is { } listType && typeof(T).GetGenericTypeDefinition() == typeof(IList<>))
                 return Activator.CreateInstance(typeof(FlexibleListWrapper<,>).MakeGenericType(typeof(T).GenericTypeArguments[0], listType.GenericTypeArguments[0]), value);
@@ -112,7 +112,7 @@ public static class Conversion
 
     static Type GetInterfaceType(Type objType, Type genericInterfaceType)
     {
-        Tuple<Type, Type> cacheKey = new(objType, genericInterfaceType);
+        Tuple<Type, Type> cacheKey = new Tuple<Type, Type>(objType, genericInterfaceType);
 
         if (InterfaceLookupCache.ContainsKey(cacheKey))
             return InterfaceLookupCache[cacheKey];

@@ -77,7 +77,7 @@ public class ParseCommandRunner : IParseCommandRunner
 
         if (responseCode == 200)
         {
-            
+           
         }
         else if (responseCode == 201)
         {
@@ -105,8 +105,6 @@ public class ParseCommandRunner : IParseCommandRunner
             // Server error, return InternalServerError
             throw new ParseFailureException(ParseFailureException.ErrorCode.InternalServerError, content);
         }
-        //else if(responseCode == )
-
         // Try to parse the content
         try
         {
@@ -135,6 +133,7 @@ public class ParseCommandRunner : IParseCommandRunner
 
         // Return successful response
         return new Tuple<HttpStatusCode, IDictionary<string, object>>(statusCode, contentJson);
+
     }
 
     async Task<ParseCommand> PrepareCommand(ParseCommand command)

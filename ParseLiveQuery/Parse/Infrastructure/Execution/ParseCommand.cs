@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -20,11 +21,14 @@ public class ParseCommand : WebRequest
         get
         {
             if (DataObject is { })
-                return base.Data ??= (new MemoryStream(Encoding.UTF8.GetBytes(JsonUtilities.Encode(DataObject))));
-            else
-                return base.Data ??= default;
-        }
+            {
+                Debug.WriteLine($"DataObject before serialization: {JsonUtilities.Encode(DataObject)}");
 
+                // Dynamically generate the stream from DataObject on every access
+                return new MemoryStream(Encoding.UTF8.GetBytes(JsonUtilities.Encode(DataObject)));
+            }
+            return base.Data;
+        }
         set => base.Data = value;
     }
 

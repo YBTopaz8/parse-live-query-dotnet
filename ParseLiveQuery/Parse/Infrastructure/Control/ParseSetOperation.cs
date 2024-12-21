@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using Parse.Abstractions.Infrastructure;
 using Parse.Abstractions.Infrastructure.Control;
 using Parse.Infrastructure.Data;
@@ -26,7 +28,7 @@ public class ParseSetOperation : IParseFieldOperation
         // For simple values, return them directly (avoid unnecessary __op)
         if (Value != null && (Value.GetType().IsPrimitive || Value is string))
         {
-            return new Dictionary<string, object> { ["value"] = Value };
+            return new Dictionary<string, object> { ["value"] = Value};
         }
 
         // If the encoded value is a dictionary, return it directly
@@ -39,8 +41,6 @@ public class ParseSetOperation : IParseFieldOperation
         throw new ArgumentException($"Unsupported type for encoding: {Value?.GetType()?.FullName}");
     }
 
-
-
     public IParseFieldOperation MergeWithPrevious(IParseFieldOperation previous)
     {
         // Set operation always overrides previous operations
@@ -52,6 +52,40 @@ public class ParseSetOperation : IParseFieldOperation
         // Set operation always sets the field to the specified value
         return Value;
     }
+    public object ConvertValueToJSON(IServiceHub serviceHub = null)
+    {
+        // Get the values of the dictionary
+        var vals = ConvertToJSON(serviceHub).Values;
+
+        Debug.WriteLine(vals.GetType() + " 1");
+
+        // Check if vals is a ValueCollection and contains exactly one element
+        if (vals.Count == 1)
+        {
+            Debug.WriteLine(vals.GetType() + " 2");
+
+            // Return the first and only value
+            return vals.FirstOrDefault();
+        }
+
+        // Return vals if no single value is found
+        return vals;
+    }
+
+    //public object ConvertValueToJSON(IServiceHub serviceHub = null)
+    //{
+    //    var vals = ConvertToJSON(serviceHub).Values;
+    //    Debug.WriteLine(vals.GetType() + " 1");
+    //    if (vals.GetType() == typeof(IDictionary<string,object>) || vals.GetType() == typeof(Dictionary<string, object>))
+    //    {
+    //        if (vals.Count == 1)
+    //        {
+    //            Debug.WriteLine(vals.GetType() + " 2");
+    //            return vals.FirstOrDefault();
+    //        }
+    //    }
+    //    return vals;
+    //}
 
     public object Value { get; private set; }
 }

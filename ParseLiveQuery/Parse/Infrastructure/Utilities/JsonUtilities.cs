@@ -414,8 +414,12 @@ public class JsonUtilities
         foreach (KeyValuePair<string, object> pair in dict)
         {
             builder.Append(Encode(pair.Key));
+            Debug.WriteLine(pair.Key);
+            Debug.WriteLine(pair.Key.GetType());
             builder.Append(":");
             builder.Append(Encode(pair.Value));
+            Debug.WriteLine(pair.Value.GetType());
+            Debug.WriteLine(pair.Value);
             builder.Append(",");
         }
         builder[builder.Length - 1] = '}';

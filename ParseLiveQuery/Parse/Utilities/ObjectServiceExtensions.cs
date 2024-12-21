@@ -82,7 +82,7 @@ public static class ObjectServiceExtensions
     /// <returns>A new ParseObject for the given class name.</returns>
     public static T CreateObject<T>(this IServiceHub serviceHub) where T : ParseObject
     {
-        return (T) serviceHub.ClassController.CreateObject<T>(serviceHub);
+        return (T)serviceHub.ClassController.CreateObject<T>(serviceHub);
     }
 
     /// <summary>
@@ -91,8 +91,8 @@ public static class ObjectServiceExtensions
     /// <returns>A new ParseObject for the given class name.</returns>
     public static T CreateObject<T>(this IParseObjectClassController classController, IServiceHub serviceHub) where T : ParseObject
     {
-        
-        return (T) classController.Instantiate(classController.GetClassName(typeof(T)), serviceHub);
+
+        return (T)classController.Instantiate(classController.GetClassName(typeof(T)), serviceHub);
     }
 
     /// <summary>
@@ -123,6 +123,8 @@ public static class ObjectServiceExtensions
         ParseObject.CreatingPointer.Value = true;
         try
         {
+
+
             ParseObject result = classController.Instantiate(className, serviceHub);
             result.ObjectId = objectId;
 
@@ -130,9 +132,18 @@ public static class ObjectServiceExtensions
 
             result.IsDirty = false;
             if (result.IsDirty)
+            {
                 throw new InvalidOperationException("A ParseObject subclass default constructor must not make changes to the object that cause it to be dirty.");
+            }
             else
-                return  result;
+                return result;
+
+        }
+        catch (Exception ex)
+        {
+
+            Debug.WriteLine("Exception " + ex.Message);
+            throw new Exception(ex.Message);
         }
         finally
         {
@@ -150,7 +161,7 @@ public static class ObjectServiceExtensions
     /// <returns>A ParseObject without data.</returns>
     public static T CreateObjectWithoutData<T>(this IServiceHub serviceHub, string objectId) where T : ParseObject
     {
-        return (T) serviceHub.CreateObjectWithoutData(serviceHub.ClassController.GetClassName(typeof(T)), objectId);
+        return (T)serviceHub.CreateObjectWithoutData(serviceHub.ClassController.GetClassName(typeof(T)), objectId);
     }
     /// <summary>
     /// Creates a reference to a new ParseObject with the specified initial data.
@@ -167,7 +178,7 @@ public static class ObjectServiceExtensions
         }
 
         // Create a new instance of the specified ParseObject type
-        var parseObject = (T) serviceHub.CreateObject(serviceHub.ClassController.GetClassName(typeof(T)));
+        var parseObject = (T)serviceHub.CreateObject(serviceHub.ClassController.GetClassName(typeof(T)));
 
         // Set initial data properties
         foreach (var kvp in initialData)
@@ -303,7 +314,7 @@ public static class ObjectServiceExtensions
     /// <param name="cancellationToken">The cancellation token.</param>
     public static async Task SaveObjectsAsync<T>(this IServiceHub serviceHub, IEnumerable<T> objects, CancellationToken cancellationToken) where T : ParseObject
     {
-        _ = DeepSaveAsync(serviceHub, objects.ToList(),await serviceHub.GetCurrentSessionToken(), cancellationToken);
+        _ = DeepSaveAsync(serviceHub, objects.ToList(), await serviceHub.GetCurrentSessionToken(), cancellationToken);
     }
 
     /// <summary>
@@ -337,21 +348,21 @@ public static class ObjectServiceExtensions
         {
             throw new ArgumentNullException(nameof(state), "The state cannot be null.");
         }
-        
+
         // Ensure the class name is determined or throw an exception
         string className = state.ClassName ?? defaultClassName;
         if (string.IsNullOrEmpty(className))
         {
-        
+
             throw new InvalidOperationException("Both state.ClassName and defaultClassName are null or empty. Unable to determine class name.");
         }
-        
+
         // Create the object using the class controller
         T obj = classController.Instantiate(className, serviceHub) as T;
-        
+
         if (obj == null)
         {
-        
+
             throw new InvalidOperationException($"Failed to instantiate object of type {typeof(T).Name} for class {className}.");
         }
 
@@ -361,19 +372,21 @@ public static class ObjectServiceExtensions
         return obj;
     }
 
-
-    internal static IDictionary<string, object> GenerateJSONObjectForSaving(this IServiceHub serviceHub, IDictionary<string, IParseFieldOperation> operations)
+    internal static IDictionary<string, object> GenerateJSONObjectForSaving(
+    this IServiceHub serviceHub, IDictionary<string, IParseFieldOperation> operations)
     {
-        Dictionary<string, object> result = new();
-
+        Dictionary<string, object> result = new Dictionary<string, object>();
+        
         foreach (KeyValuePair<string, IParseFieldOperation> pair in operations)
         {
-            //result[pair.Key] = PointerOrLocalIdEncoder.Instance.Encode(pair.Value, serviceHub);
-            result[pair.Key] = PointerOrLocalIdEncoder.Instance.Encode(pair.Value.Value, serviceHub);
+            var s= PointerOrLocalIdEncoder.Instance.Encode(pair.Value, serviceHub);
+            Debug.WriteLine(s.GetType());
+            result[pair.Key] = s;
         }
 
         return result;
     }
+
 
     /// <summary>
     /// Returns true if the given object can be serialized for saving as a value
@@ -438,7 +451,7 @@ public static class ObjectServiceExtensions
     {
         CollectDirtyChildren(serviceHub, node, dirtyChildren, new HashSet<ParseObject>(new IdentityEqualityComparer<ParseObject>()), new HashSet<ParseObject>(new IdentityEqualityComparer<ParseObject>()));
     }
-    
+
     internal static async Task DeepSaveAsync(this IServiceHub serviceHub, object target, string sessionToken, CancellationToken cancellationToken)
     {
         // Collect dirty objects
@@ -458,14 +471,14 @@ public static class ObjectServiceExtensions
 
         // Save remaining objects in batches
         var remaining = new List<ParseObject>(uniqueObjects);
-        while (remaining.Count>0)
+        while (remaining.Count > 0)
         {
             // Partition objects into those that can be saved immediately and those that cannot
             var current = remaining.Where(item => item.CanBeSerialized).ToList();
             var nextBatch = remaining.Where(item => !item.CanBeSerialized).ToList();
             remaining = nextBatch;
 
-            if (current.Count<1)
+            if (current.Count < 1)
             {
                 throw new InvalidOperationException("Unable to save a ParseObject with a relation to a cycle.");
             }
@@ -546,7 +559,7 @@ public static class ObjectServiceExtensions
     {
         // The task that will be complete when all of the child queues indicate they're ready to start.
 
-        TaskCompletionSource<object> readyToStart = new();
+        TaskCompletionSource<object> readyToStart = new TaskCompletionSource<object>();
 
         // First, we need to lock the mutex for the queue for every object. We have to hold this
         // from at least when taskStart() is called to when obj.taskQueue enqueue is called, so
@@ -554,7 +567,7 @@ public static class ObjectServiceExtensions
         // The locks have to be sorted so that we always acquire them in the same order.
         // Otherwise, there's some risk of deadlock.
 
-        LockSet lockSet = new(objects.Select(o => o.TaskQueue.Mutex));
+        LockSet lockSet = new LockSet(objects.Select(o => o.TaskQueue.Mutex));
 
         lockSet.Enter();
         try
@@ -566,7 +579,7 @@ public static class ObjectServiceExtensions
 
             // Add fullTask to each of the objects' queues.
 
-            List<Task> childTasks = new();
+            List<Task> childTasks = new List<Task>();
             foreach (ParseObject obj in objects)
             {
                 obj.TaskQueue.Enqueue((Task task) =>

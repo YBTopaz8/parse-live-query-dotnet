@@ -12,4 +12,6 @@ public interface IJsonConvertible
     /// </summary>
     /// <returns>An object to be JSONified.</returns>
     IDictionary<string, object> ConvertToJSON(IServiceHub serviceHub=default);
+    
+    
 }

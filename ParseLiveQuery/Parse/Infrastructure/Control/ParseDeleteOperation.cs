@@ -38,5 +38,4 @@ public class ParseDeleteOperation : IParseFieldOperation
         return Token;
     }
 
-    
 }
