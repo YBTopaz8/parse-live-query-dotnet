@@ -24,7 +24,7 @@ public static class QueryServiceExtensions
     /// <returns>A query that is the or of the given queries.</returns>
     public static ParseQuery<T> ConstructOrQuery<T>(this IServiceHub serviceHub, ParseQuery<T> source, params ParseQuery<T>[] queries) where T : ParseObject
     {
-        return serviceHub.ConstructOrQuery(queries.Concat([source]));
+        return serviceHub.ConstructOrQuery(queries.Concat(new[] { source }));
     }
 
     /// <summary>
@@ -35,8 +35,7 @@ public static class QueryServiceExtensions
     public static ParseQuery<T> ConstructOrQuery<T>(this IServiceHub serviceHub, IEnumerable<ParseQuery<T>> queries) where T : ParseObject
     {
         string className = default;
-        List<IDictionary<string, object>> orValue = new()
-        { };
+        List<IDictionary<string, object>> orValue = new List<IDictionary<string, object>> { };
 
         // We need to cast it to non-generic IEnumerable because of AOT-limitation
 

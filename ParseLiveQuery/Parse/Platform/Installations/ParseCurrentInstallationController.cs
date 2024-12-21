@@ -10,8 +10,8 @@ namespace Parse.Platform.Installations;
 internal class ParseCurrentInstallationController : IParseCurrentInstallationController
 {
     private static readonly string ParseInstallationKey = nameof(CurrentInstallation);
-    private readonly object Mutex = new();
-    private readonly TaskQueue TaskQueue = new();
+    private readonly object Mutex = new object();
+    private readonly TaskQueue TaskQueue = new TaskQueue();
 
     private readonly IParseInstallationController InstallationController;
     private readonly ICacheController StorageController;

@@ -349,13 +349,12 @@ public class ParseLiveQueryClient
     {
         try
         {
-            if (jsonObject.TryGetValue("requestId", out var requestIdObj) &&
-                requestIdObj is int requestId &&
-                jsonObject.TryGetValue("object", out var objectElement) &&
-                objectElement is JsonElement jsonElement &&
-                _subscriptions.TryGetValue(requestId, out var subscription))
+            int requestId = Convert.ToInt32(jsonObject["requestId"]);
+            var jsonElement = (JsonElement)jsonObject["object"];
+            var objectData = JsonElementToDictionary(jsonElement);
+            //var objectElement = (JsonElement)jsonObject["original"]; // TODO: Expose this in the future
+            if (_subscriptions.TryGetValue(requestId, out var subscription))
             {
-                var objectData = JsonElementToDictionary(jsonElement);
                 var obj = ParseClient.Instance.Decoder.Decode(objectData, ParseClient.Instance.Services);
 
                 _objectEventSubject.OnNext((subscriptionEvent, obj, subscription));

@@ -1282,7 +1282,7 @@ public class ParseObject : IEnumerable<KeyValuePair<string, object>>, INotifyPro
     {
         lock (Mutex)
         {
-            return ((IEnumerable<KeyValuePair<string, object>>)this).GetEnumerator();
+            return ((IEnumerable<KeyValuePair<string, object>>) this).GetEnumerator();
         }
     }
     /// <summary>

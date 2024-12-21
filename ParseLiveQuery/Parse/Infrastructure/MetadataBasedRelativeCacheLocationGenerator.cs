@@ -13,7 +13,7 @@ public struct MetadataBasedRelativeCacheLocationGenerator : IRelativeCacheLocati
     /// An instance of <see cref="MetadataBasedRelativeCacheLocationGenerator"/> with inferred values based on the entry assembly. Should be used with <see cref="EnvironmentData.Inferred"/> and <see cref="HostManifestData.Inferred"/>.
     /// </summary>
     /// <remarks>Should not be used with Unity.</remarks>
-    public static MetadataBasedRelativeCacheLocationGenerator Inferred => new()
+    public static MetadataBasedRelativeCacheLocationGenerator Inferred => new MetadataBasedRelativeCacheLocationGenerator
     {
         Company = Assembly.GetExecutingAssembly()?.GetCustomAttribute<AssemblyCompanyAttribute>()?.Company,
         Product = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyProductAttribute>()?.Product ?? Assembly.GetEntryAssembly()?.GetName()?.Name

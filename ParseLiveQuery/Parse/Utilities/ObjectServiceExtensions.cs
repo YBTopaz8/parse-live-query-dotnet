@@ -82,7 +82,7 @@ public static class ObjectServiceExtensions
     /// <returns>A new ParseObject for the given class name.</returns>
     public static T CreateObject<T>(this IServiceHub serviceHub) where T : ParseObject
     {
-        return (T)serviceHub.ClassController.CreateObject<T>(serviceHub);
+        return (T) serviceHub.ClassController.CreateObject<T>(serviceHub);
     }
 
     /// <summary>
@@ -92,7 +92,7 @@ public static class ObjectServiceExtensions
     public static T CreateObject<T>(this IParseObjectClassController classController, IServiceHub serviceHub) where T : ParseObject
     {
 
-        return (T)classController.Instantiate(classController.GetClassName(typeof(T)), serviceHub);
+        return (T) classController.Instantiate(classController.GetClassName(typeof(T)), serviceHub);
     }
 
     /// <summary>
@@ -161,7 +161,7 @@ public static class ObjectServiceExtensions
     /// <returns>A ParseObject without data.</returns>
     public static T CreateObjectWithoutData<T>(this IServiceHub serviceHub, string objectId) where T : ParseObject
     {
-        return (T)serviceHub.CreateObjectWithoutData(serviceHub.ClassController.GetClassName(typeof(T)), objectId);
+        return (T) serviceHub.CreateObjectWithoutData(serviceHub.ClassController.GetClassName(typeof(T)), objectId);
     }
     /// <summary>
     /// Creates a reference to a new ParseObject with the specified initial data.
@@ -178,7 +178,7 @@ public static class ObjectServiceExtensions
         }
 
         // Create a new instance of the specified ParseObject type
-        var parseObject = (T)serviceHub.CreateObject(serviceHub.ClassController.GetClassName(typeof(T)));
+        var parseObject = (T) serviceHub.CreateObject(serviceHub.ClassController.GetClassName(typeof(T)));
 
         // Set initial data properties
         foreach (var kvp in initialData)
@@ -376,11 +376,11 @@ public static class ObjectServiceExtensions
     this IServiceHub serviceHub, IDictionary<string, IParseFieldOperation> operations)
     {
         Dictionary<string, object> result = new Dictionary<string, object>();
-        
+
         foreach (KeyValuePair<string, IParseFieldOperation> pair in operations)
         {
-            var s= PointerOrLocalIdEncoder.Instance.Encode(pair.Value, serviceHub);
-            Debug.WriteLine(s.GetType());
+            var s = PointerOrLocalIdEncoder.Instance.Encode(pair.Value, serviceHub);
+            
             result[pair.Key] = s;
         }
 

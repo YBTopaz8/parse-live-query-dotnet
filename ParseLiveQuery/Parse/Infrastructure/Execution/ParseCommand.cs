@@ -22,8 +22,6 @@ public class ParseCommand : WebRequest
         {
             if (DataObject is { })
             {
-                Debug.WriteLine($"DataObject before serialization: {JsonUtilities.Encode(DataObject)}");
-
                 // Dynamically generate the stream from DataObject on every access
                 return new MemoryStream(Encoding.UTF8.GetBytes(JsonUtilities.Encode(DataObject)));
             }
@@ -32,7 +30,7 @@ public class ParseCommand : WebRequest
         set => base.Data = value;
     }
 
-    public ParseCommand(string relativeUri, string method, string sessionToken = null, IList<KeyValuePair<string, string>> headers = null, IDictionary<string, object> data = null) :  this(
+    public ParseCommand(string relativeUri, string method, string sessionToken = null, IList<KeyValuePair<string, string>> headers = null, IDictionary<string, object> data = null) : this(
         relativeUri: relativeUri, method: method, sessionToken: sessionToken, headers: headers, stream: null, contentType: data != null ? "application/json" : null)
     {
         DataObject = data;

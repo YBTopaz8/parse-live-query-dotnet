@@ -25,7 +25,7 @@ public class ParseCurrentUserController : IParseCurrentUserController
     private readonly IParseDataDecoder Decoder;
 
     private readonly TaskQueue TaskQueue = new();
-    private ParseUser currentUser; // Nullable to explicitly handle absence of a user
+    private ParseUser? currentUser; // Nullable to explicitly handle absence of a user
 
     public ParseCurrentUserController(ICacheController storageController, IParseObjectClassController classController, IParseDataDecoder decoder)
     {
@@ -55,7 +55,6 @@ public class ParseCurrentUserController : IParseCurrentUserController
             {
                 var storage = await StorageController.LoadAsync().ConfigureAwait(false);
                 await storage.RemoveAsync(nameof(CurrentUser)).ConfigureAwait(false);
-                CurrentUser=null;
             }
             else
             {
@@ -67,26 +66,22 @@ public class ParseCurrentUserController : IParseCurrentUserController
 
                 // Additional properties can be added to the dictionary as needed
 
-                CurrentUser = user;
+
                 if (user.CreatedAt != null)
                     data["createdAt"] = user.CreatedAt.Value.ToString(ParseClient.DateFormatStrings.First(), CultureInfo.InvariantCulture);
 
                 if (user.UpdatedAt != null)
                     data["updatedAt"] = user.UpdatedAt.Value.ToString(ParseClient.DateFormatStrings.First(), CultureInfo.InvariantCulture);
 
-                if (user.Username != null)
-                    data["Username"] = user.Username;
-                if (user.SessionToken != null)
-                    data["sessionToken"] = user.SessionToken;
-
-
                 var storage = await StorageController.LoadAsync().ConfigureAwait(false);
                 await storage.AddAsync(nameof(CurrentUser), JsonUtilities.Encode(data)).ConfigureAwait(false);
+                
+                CurrentUser = user;
             }
 
-            return CurrentUser; // Enforce return type as `Task<ParseUser>`
+            return user; // Enforce return type as `Task<ParseUser>`
         }, cancellationToken).ConfigureAwait(false);
-
+        
         return usr;
     }
 
@@ -97,7 +92,7 @@ public class ParseCurrentUserController : IParseCurrentUserController
         if (CurrentUser is { ObjectId: { } })
             return CurrentUser;
 
-        return await TaskQueue.Enqueue<Task<ParseUser>>(async _ =>
+        var usr = await TaskQueue.Enqueue<Task<ParseUser?>>(async _ =>
         {
             var storage = await StorageController.LoadAsync().ConfigureAwait(false);
             if (storage.TryGetValue(nameof(CurrentUser), out var serializedData) && serializedData is string serialization)
@@ -113,6 +108,8 @@ public class ParseCurrentUserController : IParseCurrentUserController
 
             return CurrentUser; // Explicitly return the current user (or null)
         }, cancellationToken).ConfigureAwait(false);
+
+        return usr;
     }
 
 

@@ -10,7 +10,7 @@ public class ConcurrentUserServiceHubCloner : IServiceHubCloner, IServiceHubMuta
 
     public IServiceHub BuildHub(in IServiceHub reference, IServiceHubComposer composer, params IServiceHubMutator[] requestedMutators)
     {
-        return composer.BuildHub(default, reference, requestedMutators.Concat([this]).ToArray());
+        return composer.BuildHub(default, reference, requestedMutators.Concat(new[] { this }).ToArray());
     }
 
     public void Mutate(ref IMutableServiceHub target, in IServiceHub composedHub)

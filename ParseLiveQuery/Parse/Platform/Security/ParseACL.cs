@@ -56,11 +56,20 @@ public class ParseACL : IJsonConvertible
                     // Process user/role ACLs
                     if (permissions.ContainsKey("read"))
                     {
-                        readers.Add(pair.Key); // Add read access for the user/role
+                        var hasPermission = permissions.TryGetValue("read", out object isAllowed);
+                        if (hasPermission)
+                        {
+                            readers.Add(pair.Key); // Add read access for the user/role
+                        }
                     }
                     if (permissions.ContainsKey("write"))
                     {
-                        writers.Add(pair.Key); // Add write access for the user/role
+                        var hasPermission = permissions.TryGetValue("write", out object isAllowed);
+                        if (hasPermission)
+                        {
+                            writers.Add(pair.Key); // Add read access for the user/role
+                        }
+
                     }
                 }
                 else
@@ -107,10 +116,10 @@ public class ParseACL : IJsonConvertible
 
     public IDictionary<string, object> ConvertToJSON(IServiceHub serviceHub = default)
     {
-        Dictionary<string, object> result = new();
+        Dictionary<string, object> result = new Dictionary<string, object>();
         foreach (string user in readers.Union(writers))
         {
-            Dictionary<string, object> userPermissions = new();
+            Dictionary<string, object> userPermissions = new Dictionary<string, object>();
             if (readers.Contains(user))
             {
                 userPermissions["read"] = true;

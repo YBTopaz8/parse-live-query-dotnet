@@ -49,8 +49,6 @@ public class UniversalWebClient : IWebClient
 
         HttpRequestMessage message = new HttpRequestMessage(new HttpMethod(httpRequest.Method), httpRequest.Target);
 
-        // Fill in zero-length data if method is post.
-        // Using async/await, we can keep this logic as is:
         if ((httpRequest.Data is null && httpRequest.Method.ToLower().Equals("post")
              ? new MemoryStream(new byte[0])
              : httpRequest.Data) is Stream { } data)
@@ -64,13 +62,10 @@ public class UniversalWebClient : IWebClient
             {
                 if (ContentHeaders.Contains(header.Key))
                 {
-                    // message.Content.Headers.Add(header.Key, header.Value); // Old line
-                    // Use TryAddWithoutValidation to avoid potential header issues
                     message.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
                 else
                 {
-                    // message.Headers.Add(header.Key, header.Value); // Old line
                     message.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
             }
@@ -84,9 +79,9 @@ public class UniversalWebClient : IWebClient
 
         HttpResponseMessage response = await Client.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         uploadProgress.Report(new DataTransferLevel { Amount = 1 });
-                
+
         Stream responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        
+
 
 
         MemoryStream resultStream = new MemoryStream { };
@@ -100,10 +95,10 @@ public class UniversalWebClient : IWebClient
         }
         catch
         {
-               // If length is not supported
+            Console.WriteLine("Unsupported length...");
         };
 
-   
+
         while ((bytesRead = await responseStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -114,12 +109,12 @@ public class UniversalWebClient : IWebClient
 
             if (totalLength > -1)
             {
-                downloadProgress.Report(new DataTransferLevel { Amount = (double)readSoFar / totalLength });
+                downloadProgress.Report(new DataTransferLevel { Amount = (double) readSoFar / totalLength });
             }
         }
 
-        responseStream.Dispose(); // As in old code, disposing after done reading
-                                  // If getting stream size is not supported, then report download only once.
+        responseStream.Dispose(); 
+                                  
         if (totalLength == -1)
         {
             downloadProgress.Report(new DataTransferLevel { Amount = 1.0 });
@@ -130,7 +125,7 @@ public class UniversalWebClient : IWebClient
 
         // Assume UTF-8 encoding.
         string resultString = Encoding.UTF8.GetString(resultAsArray, 0, resultAsArray.Length);
-        Debug.WriteLine(resultString);
+        
         return new Tuple<HttpStatusCode, string>(response.StatusCode, resultString);
     }
 

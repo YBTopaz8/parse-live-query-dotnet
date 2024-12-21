@@ -122,8 +122,8 @@ public class ParseAddUniqueOperation : IParseFieldOperation
             // For unsupported types, throw an error
             _ => throw new InvalidOperationException($"Unsupported type: {obj.GetType()}")
         };
-
     }
+
     public IEnumerable<object> Objects => Data;
 
     // Added Value property to return the underlying data

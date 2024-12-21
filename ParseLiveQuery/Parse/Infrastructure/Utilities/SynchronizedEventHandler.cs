@@ -57,7 +57,7 @@ public class SynchronizedEventHandler<T>
     public Task Invoke(object sender, T args)
     {
         IEnumerable<Tuple<Delegate, TaskFactory>> toInvoke;
-        Task<int>[] toContinue = [Task.FromResult(0)];
+        Task<int>[] toContinue = new[] { Task.FromResult(0) };
 
         lock (Callbacks)
         {

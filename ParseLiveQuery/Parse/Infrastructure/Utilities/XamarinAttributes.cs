@@ -31,7 +31,7 @@ internal class PreserveWrapperTypes
     ///
     /// This also applies to Unity.
     /// </summary>
-    static List<object> AOTPreservations => new()
+    static List<object> AOTPreservations => new List<object>
     {
         typeof(FlexibleListWrapper<object, object>),
         typeof(FlexibleListWrapper<object, bool>),

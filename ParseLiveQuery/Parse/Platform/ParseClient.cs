@@ -22,11 +22,11 @@ public class ParseClient : CustomServiceHub, IServiceHubComposer
     /// Contains, in order, the official ISO date and time format strings, and two modified versions that account for the possibility that the server-side string processing mechanism removed trailing zeroes.
     /// </summary>
     internal static string[] DateFormatStrings { get; } =
-    [
+    {
         "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'",
         "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'ff'Z'",
         "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'f'Z'",
-    ];
+    };
 
     /// <summary>
     /// Gets whether or not the assembly using the Parse SDK was compiled by IL2CPP.
@@ -123,12 +123,11 @@ public class ParseClient : CustomServiceHub, IServiceHubComposer
 
     internal static IDictionary<string, string> DecodeQueryString(string queryString)
     {
-        Dictionary<string, string> query = new()
-        { };
+        Dictionary<string, string> query = new Dictionary<string, string> { };
 
         foreach (string pair in queryString.Split('&'))
         {
-            string[] parts = pair.Split(['='], 2);
+            string[] parts = pair.Split(new char[] { '=' }, 2);
             query[parts[0]] = parts.Length == 2 ? Uri.UnescapeDataString(parts[1].Replace("+", " ")) : null;
         }
 
@@ -147,8 +146,7 @@ public class ParseClient : CustomServiceHub, IServiceHubComposer
 
     public IServiceHub BuildHub(IMutableServiceHub target = default, IServiceHub extension = default, params IServiceHubMutator[] configurators)
     {
-        OrchestrationServiceHub orchestrationServiceHub = new()
-        { Custom = target ??= new MutableServiceHub { }, Default = extension ?? new ServiceHub { } };
+        OrchestrationServiceHub orchestrationServiceHub = new OrchestrationServiceHub { Custom = target ??= new MutableServiceHub { }, Default = extension ?? new ServiceHub { } };
 
         foreach (IServiceHubMutator mutator in configurators.Where(configurator => configurator.Valid))
         {

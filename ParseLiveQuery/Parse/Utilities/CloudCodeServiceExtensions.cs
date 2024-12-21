@@ -51,8 +51,8 @@ public static class CloudCodeServiceExtensions
     public static async Task<T> CallCloudCodeFunctionAsync<T>(this IServiceHub serviceHub, string name, IDictionary<string, object> parameters, CancellationToken cancellationToken)
     {
 
-        var token =  await serviceHub.GetCurrentSessionToken();
-        //var token =  await serviceHub.CurrentUserController.GetCurrentSessionTokenAsync(serviceHub, cancellationToken);
+        var token = await serviceHub.GetCurrentSessionToken();
+        
         return await serviceHub.CloudCodeController.CallFunctionAsync<T>(name, parameters, token, serviceHub, cancellationToken);
     }
 }

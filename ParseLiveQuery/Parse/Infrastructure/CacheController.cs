@@ -16,8 +16,8 @@ public class CacheController : IDiskFileCacheController
 {
     private class FileBackedCache : IDataCache<string, object>
     {
-        private readonly ReaderWriterLockSlim _rwLock = new();
-        private Dictionary<string, object> Storage = new();
+        private readonly ReaderWriterLockSlim _rwLock = new ReaderWriterLockSlim();
+        private Dictionary<string, object> Storage = new Dictionary<string, object>();
 
         public FileBackedCache(FileInfo file) => File = file;
 
@@ -293,7 +293,7 @@ public class CacheController : IDiskFileCacheController
         }
     }
 
-    private readonly SemaphoreSlim _cacheSemaphore = new(1, 1);
+    private readonly SemaphoreSlim _cacheSemaphore = new SemaphoreSlim(1, 1);
 
     FileInfo File { get; set; }
     FileBackedCache Cache { get; set; }

@@ -18,7 +18,7 @@ public static class Lister
         get
         {
             // For each of the loaded assemblies, deeply walk all of their references.
-            HashSet<string> seen = new();
+            HashSet<string> seen = new HashSet<string>();
             return AppDomain.CurrentDomain.GetAssemblies().SelectMany(asm => asm.DeepWalkReferences(seen));
         }
     }
@@ -30,8 +30,7 @@ public static class Lister
         if (!seen.Add(assembly.FullName))
             return Enumerable.Empty<Assembly>();
 
-        List<Assembly> assemblies = new()
-        { assembly };
+        List<Assembly> assemblies = new List<Assembly> { assembly };
 
         foreach (AssemblyName reference in assembly.GetReferencedAssemblies())
         {

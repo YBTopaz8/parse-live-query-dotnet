@@ -163,7 +163,7 @@ public static class PushServiceExtensions
         }
     }
 
-    internal static readonly SynchronizedEventHandler<ParsePushNotificationEvent> parsePushNotificationReceived = new();
+    internal static readonly SynchronizedEventHandler<ParsePushNotificationEvent> parsePushNotificationReceived = new SynchronizedEventHandler<ParsePushNotificationEvent>();
 
     #endregion
 

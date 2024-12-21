@@ -30,10 +30,10 @@ internal class ParseObjectClass
     public ParseObject Instantiate()
     {
         var parameters = Constructor.GetParameters();
-
+        
         if (parameters.Length == 0)
-        {
-
+        {            
+            
             // Parameterless constructor
             return Constructor.Invoke(null) as ParseObject;
         }
@@ -41,14 +41,14 @@ internal class ParseObjectClass
                  parameters[0].ParameterType == typeof(string) &&
                  parameters[1].ParameterType == typeof(Parse.Abstractions.Infrastructure.IServiceHub))
         {
-
+         
 
             // Two-parameter constructor
             string className = Constructor.DeclaringType?.Name ?? "_User"; //Still Unsure about this default value, maybe User is not the best choice, but what else?
             var serviceHub = Parse.ParseClient.Instance.Services;
             return Constructor.Invoke(new object[] { className, serviceHub }) as ParseObject;
         }
-
+        
 
         throw new InvalidOperationException("Unsupported constructor signature.");
     }

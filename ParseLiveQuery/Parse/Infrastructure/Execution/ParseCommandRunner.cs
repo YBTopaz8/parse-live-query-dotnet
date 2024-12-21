@@ -77,18 +77,11 @@ public class ParseCommandRunner : IParseCommandRunner
 
         if (responseCode == 200)
         {
-           
-        }
-        else if (responseCode == 201)
-        {
+            
         }
         else if (responseCode == 404)
         {
             throw new ParseFailureException(ParseFailureException.ErrorCode.ERROR404, "Error 404");
-        }
-        if (string.IsNullOrEmpty(content))
-        {
-            return new Tuple<HttpStatusCode, IDictionary<string, object>>(statusCode, null);
         }
         if (responseCode == 410)
         {
@@ -105,6 +98,12 @@ public class ParseCommandRunner : IParseCommandRunner
             // Server error, return InternalServerError
             throw new ParseFailureException(ParseFailureException.ErrorCode.InternalServerError, content);
         }
+        if (string.IsNullOrEmpty(content))
+        {
+            return new Tuple<HttpStatusCode, IDictionary<string, object>>(statusCode, null);
+        }
+        //else if(responseCode == )
+
         // Try to parse the content
         try
         {
@@ -133,12 +132,11 @@ public class ParseCommandRunner : IParseCommandRunner
 
         // Return successful response
         return new Tuple<HttpStatusCode, IDictionary<string, object>>(statusCode, contentJson);
-
     }
 
     async Task<ParseCommand> PrepareCommand(ParseCommand command)
     {
-        ParseCommand newCommand = new(command)
+        ParseCommand newCommand = new ParseCommand(command)
         {
             Resource = ServerConnectionData.ServerURI
         };

@@ -16,7 +16,7 @@ namespace Parse;
 [ParseClassName("_Role")]
 public class ParseRole : ParseObject
 {
-    private static readonly Regex namePattern = new("^[0-9a-zA-Z_\\- ]+$");
+    private static readonly Regex namePattern = new Regex("^[0-9a-zA-Z_\\- ]+$");
 
     /// <summary>
     /// Constructs a new ParseRole. You must assign a name and ACL to the role.

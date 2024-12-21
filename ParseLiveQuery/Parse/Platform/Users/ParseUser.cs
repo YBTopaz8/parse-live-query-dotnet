@@ -104,7 +104,7 @@ public class ParseUser : ParseObject
         try
         {
             var result = await Services.UserController.SignUpAsync(State, currentOperations, Services, cancellationToken).ConfigureAwait(false);
-            Debug.WriteLine($"SignUpAsync on UserController completed. ObjectId: {result.ObjectId}");
+            
             HandleSave(result);
             var usr = await Services.SaveAndReturnCurrentUserAsync(this).ConfigureAwait(false);
 
@@ -112,7 +112,7 @@ public class ParseUser : ParseObject
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"SignUpAsync failed: {ex.Message}");
+            
             HandleFailedSave(currentOperations);
             throw;
         }

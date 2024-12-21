@@ -56,8 +56,8 @@ public class ParseRelationOperation : IParseFieldOperation
 
         if (oldValue == null)
         {
-            
-            var val=ClassController.CreateRelation(null, key, TargetClassName);
+
+            var val = ClassController.CreateRelation(null, key, TargetClassName);
             Value = val;
             return val;
         }
@@ -101,7 +101,7 @@ public class ParseRelationOperation : IParseFieldOperation
 
     public IDictionary<string, object> ConvertToJSON(IServiceHub serviceHub = null)
     {
-        
+
         List<object> additions = Additions.Select(id => PointerOrLocalIdEncoder.Instance.Encode(ClassController.CreateObjectWithoutData(TargetClassName, id, serviceHub), serviceHub)).ToList(), removals = Removals.Select(id => PointerOrLocalIdEncoder.Instance.Encode(ClassController.CreateObjectWithoutData(TargetClassName, id, serviceHub), serviceHub)).ToList();
 
         Dictionary<string, object> addition = additions.Count == 0 ? default : new Dictionary<string, object>

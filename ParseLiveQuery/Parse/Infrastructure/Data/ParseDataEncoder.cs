@@ -128,7 +128,7 @@ public abstract class ParseDataEncoder
             if (pair.Value is IDictionary<string, string> stringDictionary)
             {
                 // If the value is a Dictionary<string, string>, handle it separately
-                encodedDictionary[pair.Key] = stringDictionary.ToDictionary(k => k.Key, v => (object)v.Value);
+                encodedDictionary[pair.Key] = stringDictionary.ToDictionary(k => k.Key, v => (object) v.Value);
             }
             else
             {
@@ -139,16 +139,7 @@ public abstract class ParseDataEncoder
 
         return encodedDictionary;
     }
-    // Add a specialized method to handle double-only dictionaries
-    private object EncodeDictionary(IDictionary<string, double> dictionary, IServiceHub serviceHub)
-    {
-
-
-        return dictionary.ToDictionary(
-            pair => pair.Key,
-            pair => Encode(pair.Value, serviceHub) // Encode double values as object
-        );
-    }
+  
     // Add a specialized method to handle double-only dictionaries
     private object EncodeDictionaryStringDict(IDictionary<string, IDictionary<string, object>> dictionary, IServiceHub serviceHub)
     {

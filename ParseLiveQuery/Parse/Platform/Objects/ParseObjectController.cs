@@ -14,7 +14,6 @@ using Parse.Abstractions.Internal;
 using Parse.Infrastructure.Execution;
 using Parse.Infrastructure.Data;
 using System.Net.Http;
-using System.Net;
 
 namespace Parse.Platform.Objects;
 
@@ -36,7 +35,7 @@ public class ParseObjectController : IParseObjectController
         return ParseObjectCoder.Instance.Decode(result.Item2, Decoder, serviceHub);
     }
 
-    //
+
     public async Task<IObjectState> SaveAsync(IObjectState state, IDictionary<string, IParseFieldOperation> operations, string sessionToken, IServiceHub serviceHub, CancellationToken cancellationToken = default)
     {
         ParseCommand command;
@@ -44,7 +43,7 @@ public class ParseObjectController : IParseObjectController
         {
             var method = "POST";
             var relURI = $"classes/{Uri.EscapeDataString(state.ClassName)}";
-            var dataa = serviceHub.GenerateJSONObjectForSaving(operations); // this is where data is changed to JSON
+            var dataa = serviceHub.GenerateJSONObjectForSaving(operations);
             command = new ParseCommand(relURI, method, sessionToken: sessionToken, data: dataa);
         }
         else
@@ -55,17 +54,12 @@ public class ParseObjectController : IParseObjectController
             command = new ParseCommand(relURI, method, sessionToken: sessionToken, data: dataa);
         }
         var result = await CommandRunner.RunCommandAsync(command, cancellationToken: cancellationToken).ConfigureAwait(false);
-
-        if (result.GetType() == typeof(Tuple<HttpStatusCode, IDictionary<string, object>>))
+        if (result.Item1 == System.Net.HttpStatusCode.Gone)
         {
-            if (result.Item1 == System.Net.HttpStatusCode.Gone)
-            {
-                throw new HttpRequestException("Page does not exist");
-            }
-
-        }        
+            throw new HttpRequestException("Page does not exist");
+        }
         var decodedState = ParseObjectCoder.Instance.Decode(result.Item2, Decoder, serviceHub);
-
+        
         // Mutating the state and marking it as new if the status code is Created
         decodedState.MutatedClone(mutableClone => mutableClone.IsNew = result.Item1 == System.Net.HttpStatusCode.Created);
 
@@ -73,13 +67,13 @@ public class ParseObjectController : IParseObjectController
     }
 
 
-    public async Task<IEnumerable<Task<IObjectState>>> SaveAllAsync(IEnumerable<IObjectState> states, IEnumerable<IDictionary<string, IParseFieldOperation>> operationsList, string sessionToken, IServiceHub serviceHub, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Task<IObjectState>>> SaveAllAsync(IEnumerable<IObjectState> states,IEnumerable<IDictionary<string, IParseFieldOperation>> operationsList,string sessionToken,IServiceHub serviceHub,CancellationToken cancellationToken = default)
     {
         // Create a list of tasks where each task represents a command to be executed
         var tasks =
-            states.Zip(operationsList, (state, operations) => new ParseCommand(state.ObjectId == null ? $"classes/{Uri.EscapeDataString(state.ClassName)}" : $"classes/{Uri.EscapeDataString(state.ClassName)}/{Uri.EscapeDataString(state.ObjectId)}",
-            method: state.ObjectId == null ? "POST" : "PUT", sessionToken: sessionToken, data: serviceHub.GenerateJSONObjectForSaving(operations)))
-        .Select(command => CommandRunner.RunCommandAsync(command, null, null, cancellationToken)) // Run commands asynchronously
+            states.Zip(operationsList, (state, operations) => new ParseCommand(state.ObjectId == null? $"classes/{Uri.EscapeDataString(state.ClassName)}": $"classes/{Uri.EscapeDataString(state.ClassName)}/{Uri.EscapeDataString(state.ObjectId)}",
+            method: state.ObjectId == null ? "POST" : "PUT",sessionToken: sessionToken,data: serviceHub.GenerateJSONObjectForSaving(operations)))
+        .Select(command => CommandRunner.RunCommandAsync(command,null,null, cancellationToken)) // Run commands asynchronously
         .ToList();
 
         // Wait for all tasks to complete
@@ -193,7 +187,7 @@ public class ParseObjectController : IParseObjectController
                 else if (result.ContainsKey("error"))
                 {
                     IDictionary<string, object> error = result["error"] as IDictionary<string, object>;
-                    target.TrySetException(new ParseFailureException((ParseFailureException.ErrorCode)(long)error["code"], error[nameof(error)] as string));
+                    target.TrySetException(new ParseFailureException((ParseFailureException.ErrorCode) (long) error["code"], error[nameof(error)] as string));
                 }
                 else
                     target.TrySetException(new InvalidOperationException("Invalid batch command response."));
