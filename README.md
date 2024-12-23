@@ -1,6 +1,6 @@
 # Parse-Live-Query-Unofficial v2 (with RX and LINQ Support)
 
-[![Nuget](https://img.shields.io/nuget/v/yb.parselivequerydotnet.svg)](https://www.nuget.org/packages/YB.ParseLiveQueryDotNet)
+# Grab the Nuget Here: [![Nuget](https://img.shields.io/nuget/v/yb.parselivequerydotnet.svg)](https://www.nuget.org/packages/YB.ParseLiveQueryDotNet)
 
 # v3.0.0 🎄
 
