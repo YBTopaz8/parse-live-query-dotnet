@@ -10,6 +10,9 @@ using Parse.Abstractions.Platform.Objects;
 using Parse.Infrastructure.Utilities;
 using System.Diagnostics;
 using YB.Parse.LiveQuery;
+using System.IO;
+using System.Reflection;
+using System.Linq;
 
 namespace Parse.LiveQuery;
 public class ParseLiveQueryClient
@@ -521,4 +524,167 @@ public interface IWebSocketClientCallback
     void OnClose();
     void OnError(Exception exception);
     void OnStateChanged();
+}
+
+
+public static class ObjectMapper
+{
+    /// <summary>
+    /// Maps values from a dictionary to an instance of type T.
+    /// Logs any keys that don't match properties in T.
+    ///     
+    /// Helper to Map from Parse Dictionnary Response to Model
+    /// Example usage TestChat chat = ObjectMapper.MapFromDictionary<TestChat>(objData);    
+    /// </summary>
+    public static T MapFromDictionary<T>(IDictionary<string, object> source) where T : new()
+    {
+        // Create an instance of T
+        T target = new T();
+
+        // Get all writable properties of T
+        var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.CanWrite)
+            .ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
+
+        // Track unmatched keys
+        List<string> unmatchedKeys = new();
+
+        foreach (var kvp in source)
+        {
+            if (properties.TryGetValue(kvp.Key, out var property))
+            {
+                try
+                {
+                    // Convert and assign the value to the property
+                    if (kvp.Value != null && property.PropertyType.IsAssignableFrom(kvp.Value.GetType()))
+                    {
+                        property.SetValue(target, kvp.Value);
+                    }
+                    else if (kvp.Value != null)
+                    {
+                        // Attempt conversion for non-directly assignable types
+                        var convertedValue = Convert.ChangeType(kvp.Value, property.PropertyType);
+                        property.SetValue(target, convertedValue);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Failed to set property {property.Name}: {ex.Message}");
+                }
+            }
+            else
+            {
+                // Log unmatched keys
+                unmatchedKeys.Add(kvp.Key);
+            }
+        }
+
+        // Log keys that don't match
+        if (unmatchedKeys.Count > 0)
+        {
+            Debug.WriteLine("Unmatched Keys:");
+            foreach (var key in unmatchedKeys)
+            {
+                Debug.WriteLine($"- {key}");
+            }
+        }
+
+        return target;
+    }
+
+    public static Dictionary<string, object> ClassToDictionary<T>(T obj) where T : class
+    {
+        if (obj == null)
+        {
+            return null;
+        }
+
+        var dictionary = new Dictionary<string, object>();
+        var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        foreach (var property in properties)
+        {
+            string name = property.Name;
+            object value = property.GetValue(obj);
+
+            if (value != null)
+            {
+                dictionary[name] = ConvertValueForDictionary(value);
+            }
+        }
+
+        return dictionary;
+    }
+
+    private static object ConvertValueForDictionary(object value)
+    {
+        if (value == null)
+        {
+            return null;
+        }
+
+        Type valueType = value.GetType();
+
+        if (valueType.IsPrimitive || value is string)
+        {
+            return value;
+        }
+
+        if (value is DateTime dateTime)
+        {
+            return new Dictionary<string, object>
+            {
+                { "__type", "Date" },
+                { "iso", dateTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") }
+            };
+        }
+
+        if (value is byte[] byteArray)
+        {
+            return new Dictionary<string, object>
+            {
+                { "__type", "Bytes" },
+                { "base64", Convert.ToBase64String(byteArray) }
+            };
+        }
+
+        if (value is Stream stream)
+        {
+            using var memoryStream = new MemoryStream();
+            stream.CopyTo(memoryStream);
+            return new Dictionary<string, object>
+            {
+                { "__type", "Bytes" },
+                { "base64", Convert.ToBase64String(memoryStream.ToArray()) }
+            };
+        }
+
+        if (value is IList<object> list) // Handle generic IList
+        {
+            var convertedList = new List<object>();
+            foreach (var item in list)
+            {
+                convertedList.Add(ConvertValueForDictionary(item));
+            }
+            return convertedList;
+        }
+
+        if (value is IDictionary<string, object> dictionary)
+        {
+            var convertedDictionary = new Dictionary<string, object>();
+            foreach (var key in dictionary.Keys)
+            {
+                convertedDictionary[key] = ConvertValueForDictionary(dictionary[key]);
+            }
+            return convertedDictionary;
+        }
+
+        // Handle nested custom objects recursively
+        if (value.GetType().IsClass && value.GetType() != typeof(string))
+        {
+            return ClassToDictionary(value); // Call without className
+        }
+
+        return value?.ToString(); // Handle null and other types
+    }
 }
