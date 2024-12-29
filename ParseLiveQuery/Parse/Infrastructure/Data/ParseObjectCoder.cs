@@ -108,7 +108,8 @@ public class ParseObjectCoder
             CreatedAt = createdAt,
             UpdatedAt = updatedAt,
             ServerData = serverData,
-            SessionToken = sessionToken
+            SessionToken = sessionToken,
+            
         };
     }
 
