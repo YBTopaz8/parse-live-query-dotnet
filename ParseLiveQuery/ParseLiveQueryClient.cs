@@ -95,7 +95,7 @@ public class ParseLiveQueryClient
         _subscriptions.TryAdd(requestId, subscription);
 
         // Handle cases
-        if (IsConnected())
+        if (IsConnected)
         {
             SendSubscription(subscription);
         }
@@ -110,6 +110,13 @@ public class ParseLiveQueryClient
         return subscription;
     }
 
+    //public bool IsConnected
+    //{
+    //    get 
+    //    { 
+    //        return IsConnected(); 
+    //    }        
+    //}
 
     public void ConnectIfNeeded()
     {
@@ -200,7 +207,7 @@ public class ParseLiveQueryClient
             };
     }
 
-    private bool IsConnected() => _hasReceivedConnected;
+    public bool IsConnected { get => _hasReceivedConnected; }
 
     private void SendSubscription(Subscription subscription)
     {
