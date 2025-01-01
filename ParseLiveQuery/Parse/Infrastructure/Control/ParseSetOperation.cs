@@ -58,16 +58,15 @@ public class ParseSetOperation : IParseFieldOperation
         var vals = ConvertToJSON(serviceHub).Values;
 
 
-
         // Check if vals is a ValueCollection and contains exactly one element , that's how we get operations working! because they are dict<string,obj> of dict<string,obj>
-        if (vals.Count == 1)
-        {
+        //if (vals.Count == 1)
+        //{
             // Return the first and only value
             return vals.FirstOrDefault();
-        }
+        //}
 
         // Return vals if no single value is found
-        return vals;
+        //return vals;
     }
 
     public object Value { get; private set; }

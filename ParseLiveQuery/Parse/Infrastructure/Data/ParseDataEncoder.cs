@@ -92,9 +92,10 @@ public abstract class ParseDataEncoder
     /// </summary>
     private static IDictionary<string, object> EncodeDate(DateTime date)
     {
+        var e = date.ToString(SupportedDateFormats.First(), CultureInfo.InvariantCulture);
         return new Dictionary<string, object>
         {
-
+            
             ["iso"] = date.ToString(SupportedDateFormats.First(), CultureInfo.InvariantCulture),
             ["__type"] = "Date"
         };

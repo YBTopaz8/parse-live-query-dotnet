@@ -77,7 +77,7 @@ public class ParseCommandRunner : IParseCommandRunner
 
         if (responseCode == 200)
         {
-            ParseFile
+            
         }
         else if (responseCode == 404)
         {

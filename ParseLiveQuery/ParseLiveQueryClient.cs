@@ -13,6 +13,7 @@ using YB.Parse.LiveQuery;
 using System.IO;
 using System.Reflection;
 using System.Linq;
+using System.Collections;
 
 namespace Parse.LiveQuery;
 public class ParseLiveQueryClient
@@ -87,6 +88,7 @@ public class ParseLiveQueryClient
     /// </summary>
     public Subscription<T> Subscribe<T>(ParseQuery<T> query) where T : ParseObject
     {
+
         // Create Subscription object
         var requestId = _requestIdCount++;
         var subscription = _subscriptionFactory.CreateSubscription(requestId, query);
@@ -227,13 +229,16 @@ public class ParseLiveQueryClient
     private Task SendOperationWithSessionAsync(Func<string, IClientOperation> operationFunc)
     {
         return _taskQueue.EnqueueOnSuccess(
+
             ParseClient.Instance.CurrentUserController.GetCurrentSessionTokenAsync(ParseClient.Instance.Services, CancellationToken.None),
+
             currentSessionTokenTask => SendOperationAsync(operationFunc(currentSessionTokenTask.Result))
         );
     }
 
     private Task SendOperationAsync(IClientOperation operation)
     {
+
         return _taskQueue.Enqueue(() => _webSocketClient.Send(operation.ToJson()));
     }
 
@@ -534,7 +539,8 @@ public interface IWebSocketClientCallback
 }
 
 
-public static class ObjectMapper
+
+public static class ObjectHelper 
 {
     /// <summary>
     /// Maps values from a dictionary to an instance of type T.
@@ -543,60 +549,75 @@ public static class ObjectMapper
     /// Helper to Map from Parse Dictionnary Response to Model
     /// Example usage TestChat chat = ObjectMapper.MapFromDictionary<TestChat>(objData);    
     /// </summary>
-    public static T MapFromDictionary<T>(IDictionary<string, object> source) where T : new()
+    public static T MapFromDictionary<T>(IDictionary<string, object> source) where T : class
     {
-        // Create an instance of T
-        T target = new T();
-
-        // Get all writable properties of T
-        var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.CanWrite)
-            .ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
-
-        // Track unmatched keys
-        List<string> unmatchedKeys = new();
-
-        foreach (var kvp in source)
+        try
         {
-            if (properties.TryGetValue(kvp.Key, out var property))
+            // Attempt to create an instance of T using Activator.CreateInstance
+            // This will return null if T doesn't have a parameterless constructor (or if it's abstract)
+            T target = (T)Activator.CreateInstance(typeof(T));
+
+            if (target == null)
             {
-                try
+                Debug.WriteLine($"Warning: Could not create an instance of {typeof(T).Name}. Ensure it has a public parameterless constructor.");
+                return null; // Return null if instantiation fails
+            }
+
+            // Get all writable properties of T
+            var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.CanWrite)
+                .ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
+
+            // Track unmatched keys
+            List<string> unmatchedKeys = new();
+
+            foreach (var kvp in source)
+            {
+                if (properties.TryGetValue(kvp.Key, out var property))
                 {
-                    // Convert and assign the value to the property
-                    if (kvp.Value != null && property.PropertyType.IsAssignableFrom(kvp.Value.GetType()))
+                    try
                     {
-                        property.SetValue(target, kvp.Value);
+                        // Convert and assign the value to the property
+                        if (kvp.Value != null && property.PropertyType.IsAssignableFrom(kvp.Value.GetType()))
+                        {
+                            property.SetValue(target, kvp.Value);
+                        }
+                        else if (kvp.Value != null)
+                        {
+                            // Attempt conversion for non-directly assignable types
+                            var convertedValue = Convert.ChangeType(kvp.Value, property.PropertyType);
+                            property.SetValue(target, convertedValue);
+                        }
                     }
-                    else if (kvp.Value != null)
+                    catch (Exception ex)
                     {
-                        // Attempt conversion for non-directly assignable types
-                        var convertedValue = Convert.ChangeType(kvp.Value, property.PropertyType);
-                        property.SetValue(target, convertedValue);
+                        Debug.WriteLine($"Failed to set property {property.Name} on {typeof(T).Name}: {ex.Message}");
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    Debug.WriteLine($"Failed to set property {property.Name}: {ex.Message}");
+                    // Log unmatched keys
+                    unmatchedKeys.Add(kvp.Key);
                 }
             }
-            else
-            {
-                // Log unmatched keys
-                unmatchedKeys.Add(kvp.Key);
-            }
-        }
 
-        // Log keys that don't match
-        if (unmatchedKeys.Count > 0)
+            // Log keys that don't match
+            if (unmatchedKeys.Count > 0)
+            {
+                Debug.WriteLine($"Unmatched Keys for {typeof(T).Name}:");
+                foreach (var key in unmatchedKeys)
+                {
+                    Debug.WriteLine($"- {key}");
+                }
+            }
+
+            return target;
+        }
+        catch (Exception ex)
         {
-            Debug.WriteLine("Unmatched Keys:");
-            foreach (var key in unmatchedKeys)
-            {
-                Debug.WriteLine($"- {key}");
-            }
+            Debug.WriteLine($"Error creating instance of {typeof(T).Name}: {ex.Message}");
+            return null; // Return null if any error occurs during instantiation
         }
-
-        return target;
     }
 
     public static Dictionary<string, object> ClassToDictionary<T>(T obj) where T : class
@@ -630,6 +651,56 @@ public static class ObjectMapper
             return null;
         }
 
+        // Handle Parse specific types first for efficiency
+
+        // ParseObject (for Pointers)
+        if (value is ParseObject parseObject && !string.IsNullOrEmpty(parseObject.ObjectId))
+        {
+            return new Dictionary<string, object>
+            {
+                { "__type", "Pointer" },
+                { "className", parseObject.ClassName },
+                { "objectId", parseObject.ObjectId }
+            };
+        }
+
+        // ParseFile
+        if (value is ParseFile parseFile && !string.IsNullOrEmpty(parseFile.Name) && parseFile.DataStream != null)
+        {
+            using var memoryStream = new MemoryStream();
+            parseFile.DataStream.CopyTo(memoryStream);
+            return new Dictionary<string, object>
+            {
+                { "__type", "File" },
+                { "name", parseFile.Name },
+                // URL is typically not set on a new ParseFile, so we rely on the data
+                { "_ContentType", parseFile.MimeType }, // Optional, but good to include
+                { "_Base64", Convert.ToBase64String(memoryStream.ToArray()) }
+            };
+        }
+
+        // ParseGeoPoint
+        if (value is ParseGeoPoint geoPoint)
+        {
+            return new Dictionary<string, object>
+            {
+                { "__type", "GeoPoint" },
+                { "latitude", geoPoint.Latitude },
+                { "longitude", geoPoint.Longitude }
+            };
+        }
+
+        //// ParseRelation (Asynchronous)
+        //if (value is ParseRelation<ParseObject> relation)
+        //{
+        //    var targetObjects = await relation.Query.FindAsync();
+        //    return targetObjects.Select(obj => new Dictionary<string, object>
+        //    {
+        //        { "__type", "Pointer" },
+        //        { "className", obj.ClassName },
+        //        { "objectId", obj.ObjectId }
+        //    }).ToList<object>();
+        //}
         Type valueType = value.GetType();
 
         if (valueType.IsPrimitive || value is string)
@@ -666,22 +737,26 @@ public static class ObjectMapper
             };
         }
 
-        if (value is IList<object> list) // Handle generic IList
+        if (value is IList list) // Handle generic IList
         {
-            var convertedList = new List<object>();
-            foreach (var item in list)
-            {
-                convertedList.Add(ConvertValueForDictionary(item));
+            if (list is not null)
+            {                
+                var convertedList = new List<object>();
+                foreach (var item in list)
+                {
+                    convertedList.Add(ConvertValueForDictionary(item));
+                }
+            
+                return convertedList;
             }
-            return convertedList;
         }
 
-        if (value is IDictionary<string, object> dictionary)
+        if (value is IDictionary dictionary)
         {
             var convertedDictionary = new Dictionary<string, object>();
             foreach (var key in dictionary.Keys)
             {
-                convertedDictionary[key] = ConvertValueForDictionary(dictionary[key]);
+                convertedDictionary[key.ToString()] = ConvertValueForDictionary(dictionary[key]);
             }
             return convertedDictionary;
         }
@@ -689,9 +764,9 @@ public static class ObjectMapper
         // Handle nested custom objects recursively
         if (value.GetType().IsClass && value.GetType() != typeof(string))
         {
-            return ClassToDictionary(value); // Call without className
+            return ClassToDictionary(value);
         }
 
-        return value?.ToString(); // Handle null and other types
+        return value?.ToString(); // Fallback for unhandled types
     }
 }

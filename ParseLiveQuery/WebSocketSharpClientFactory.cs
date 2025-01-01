@@ -59,6 +59,7 @@ public class WebSocketClient : IWebSocketClient, IDisposable
 
     public async Task Open()
     {
+        
         if (_disposed)
         {
             throw new ObjectDisposedException(nameof(WebSocketClient));
